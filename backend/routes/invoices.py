@@ -55,7 +55,8 @@ def create_or_update_invoice(request: Request, data: InvoiceUpdate):
 @router.put("/{invoice_id}/pay")
 def pay_invoice(invoice_id: str, request: Request, data: InvoicePayRequest):
     """
-    data should contain: accountId, paidAt, amount
+    Marca a fatura como paga. Não cria despesa pois as compras do cartão
+    já são contabilizadas separadamente no saldo.
     """
     user_id = request.state.user_id
     invoice = get_document(user_id, COLLECTION_NAME, invoice_id)
@@ -69,7 +70,6 @@ def pay_invoice(invoice_id: str, request: Request, data: InvoicePayRequest):
     paid_at = data.paidAt or datetime.now().isoformat()
     amount = data.amount or invoice.get('totalAmount')
     
-    # 1. Update invoice
     update_data = {
         "status": "paga",
         "paidAt": paid_at,
@@ -78,19 +78,4 @@ def pay_invoice(invoice_id: str, request: Request, data: InvoicePayRequest):
     }
     update_document(user_id, COLLECTION_NAME, invoice_id, update_data)
     
-    # 2. Create expense — fetch card by document ID directly
-    card = get_document(user_id, "cards", invoice['cardId'])
-    card_name = card['name'] if card else "Cartão"
-    
-    expense_data = {
-        "description": f"Pagamento Fatura {card_name} - {invoice['month']}",
-        "amount": amount,
-        "category": "Cartão de Crédito",
-        "accountId": account_id,
-        "type": "variavel",
-        "date": paid_at,
-        "month": datetime.fromisoformat(paid_at.replace('Z', '+00:00')).strftime("%Y-%m")
-    }
-    create_document(user_id, "expenses", expense_data)
-    
-    return {"message": "Fatura paga com sucesso e despesa gerada"}
+    return {"message": "Fatura paga com sucesso"}

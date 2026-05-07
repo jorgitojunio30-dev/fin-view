@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useWallet } from '../contexts/WalletContext';
+import { useToast } from '../components/UI/Toast';
+import { useConfirm } from '../components/UI/ConfirmDialog';
 import { dashboardService } from '../services/dashboard';
 import { revenueService } from '../services/revenues';
 import { expenseService } from '../services/expenses';
+import { invoiceService } from '../services/invoices';
 import { cardService } from '../services/cards';
 import Card, { CardIcone } from '../components/UI/Card';
 import Modal from '../components/UI/Modal';
@@ -20,6 +23,8 @@ import './Dashboard.css';
 export default function Dashboard() {
   const { usuario } = useAuth();
   const { carteiraSelecionada } = useWallet();
+  const toast = useToast();
+  const confirmar = useConfirm();
   const [resumo, setResumo] = useState(null);
   const [receitas, setReceitas] = useState([]);
   const [despesas, setDespesas] = useState([]);
@@ -57,20 +62,22 @@ export default function Dashboard() {
       setCarregando(true);
       const token = await usuario.getIdToken();
 
-      const [dadosResumo, dadosReceitas, dadosDespesas, dadosCartoes, dadosContas] = await Promise.all([
+      const [dadosResumo, dadosReceitas, dadosDespesas, dadosCartoes, dadosContas, dadosFaturas] = await Promise.all([
         dashboardService.getSummary(token, mesAtual, carteiraSelecionada),
         revenueService.getRevenues(token, mesAtual),
         expenseService.getExpenses(token, mesAtual),
         cardService.getCards(token),
-        accountService.getAccounts(token)
+        accountService.getAccounts(token),
+        invoiceService.getInvoices(token, null, mesAtual)
       ]);
 
-      // Para cada cartão, buscar o total de compras do mês
+      // Para cada cartão, buscar o total de compras do mês e associar fatura
       const cartoesComTotal = await Promise.all(
         dadosCartoes.map(async (cartao) => {
           const compras = await cardService.getPurchases(token, mesAtual, cartao.id);
           const total = compras.reduce((acc, c) => acc + (c.amount || 0), 0);
-          return { ...cartao, totalMes: total, qtdCompras: compras.length };
+          const fatura = dadosFaturas.find(f => f.cardId === cartao.id);
+          return { ...cartao, totalMes: total, qtdCompras: compras.length, fatura };
         })
       );
 
@@ -116,8 +123,9 @@ export default function Dashboard() {
       const token = await usuario.getIdToken();
       const { status } = await revenueService.toggleStatus(token, receita.id);
       setReceitas(prev => prev.map(r => r.id === receita.id ? { ...r, status } : r));
+      toast.sucesso(status === 'realizado' ? 'Receita marcada como recebida.' : 'Receita marcada como pendente.');
     } catch (erro) {
-      console.error("Erro ao atualizar status:", erro);
+      toast.erro("Erro ao atualizar status.");
     }
   }
 
@@ -126,8 +134,9 @@ export default function Dashboard() {
       const token = await usuario.getIdToken();
       const { status } = await expenseService.toggleStatus(token, despesa.id);
       setDespesas(prev => prev.map(d => d.id === despesa.id ? { ...d, status } : d));
+      toast.sucesso(status === 'realizado' ? 'Despesa marcada como paga.' : 'Despesa marcada como pendente.');
     } catch (erro) {
-      console.error("Erro ao atualizar status:", erro);
+      toast.erro("Erro ao atualizar status.");
     }
   }
 
@@ -148,14 +157,17 @@ export default function Dashboard() {
       const token = await usuario.getIdToken();
       let scope = 'single';
       if (receitaEditando?.recurringId) {
-        if (window.confirm("Aplicar alterações a todas as ocorrências futuras?")) scope = 'future';
+        const futuras = await confirmar("Aplicar alterações a todas as ocorrências futuras?");
+        if (futuras) scope = 'future';
       }
       await revenueService.updateRevenue(token, receitaEditando.id, dados, scope);
+      toast.sucesso("Receita atualizada!");
       await carregarDados();
       setModalReceitaAberto(false);
       setReceitaEditando(null);
     } catch (erro) {
       console.error("Erro ao salvar receita:", erro);
+      toast.erro("Erro ao salvar receita.");
     } finally {
       setSalvando(false);
     }
@@ -167,14 +179,17 @@ export default function Dashboard() {
       const token = await usuario.getIdToken();
       let scope = 'single';
       if (despesaEditando?.recurringId) {
-        if (window.confirm("Aplicar alterações a todas as parcelas futuras?")) scope = 'future';
+        const futuras = await confirmar("Aplicar alterações a todas as parcelas futuras?");
+        if (futuras) scope = 'future';
       }
       await expenseService.updateExpense(token, despesaEditando.id, dados, scope);
+      toast.sucesso("Despesa atualizada!");
       await carregarDados();
       setModalDespesaAberto(false);
       setDespesaEditando(null);
     } catch (erro) {
       console.error("Erro ao salvar despesa:", erro);
+      toast.erro("Erro ao salvar despesa.");
     } finally {
       setSalvando(false);
     }
@@ -184,34 +199,50 @@ export default function Dashboard() {
   async function handleExcluirReceita(receita) {
     let scope = 'single';
     if (receita.recurringId) {
-      if (window.confirm("Excluir todas as ocorrências futuras?")) scope = 'future';
-      else if (!window.confirm("Excluir apenas esta ocorrência?")) return;
+      const futuras = await confirmar("Excluir todas as ocorrências futuras desta receita fixa?");
+      if (futuras) {
+        scope = 'future';
+      } else {
+        const apenas = await confirmar("Excluir apenas esta ocorrência?");
+        if (!apenas) return;
+      }
     } else {
-      if (!window.confirm("Excluir esta receita?")) return;
+      const ok = await confirmar("Excluir esta receita?");
+      if (!ok) return;
     }
     try {
       const token = await usuario.getIdToken();
       await revenueService.deleteRevenue(token, receita.id, scope);
+      toast.sucesso("Receita excluída.");
       await carregarDados();
     } catch (erro) {
       console.error("Erro ao excluir receita:", erro);
+      toast.erro("Erro ao excluir receita.");
     }
   }
 
   async function handleExcluirDespesa(despesa) {
     let scope = 'single';
     if (despesa.recurringId) {
-      if (window.confirm("Excluir todas as parcelas futuras?")) scope = 'future';
-      else if (!window.confirm("Excluir apenas esta parcela?")) return;
+      const futuras = await confirmar("Excluir todas as parcelas futuras desta despesa fixa?");
+      if (futuras) {
+        scope = 'future';
+      } else {
+        const apenas = await confirmar("Excluir apenas esta parcela?");
+        if (!apenas) return;
+      }
     } else {
-      if (!window.confirm("Excluir esta despesa?")) return;
+      const ok = await confirmar("Excluir esta despesa?");
+      if (!ok) return;
     }
     try {
       const token = await usuario.getIdToken();
       await expenseService.deleteExpense(token, despesa.id, scope);
+      toast.sucesso("Despesa excluída.");
       await carregarDados();
     } catch (erro) {
       console.error("Erro ao excluir despesa:", erro);
+      toast.erro("Erro ao excluir despesa.");
     }
   }
 
@@ -238,6 +269,64 @@ export default function Dashboard() {
       case 'vence-amanha': return '3px solid var(--cor-alerta)';
       case 'pendente': return '3px solid var(--cor-borda-hover)';
       default: return '3px solid var(--cor-sucesso)';  // pago
+    }
+  }
+
+  // Pagar fatura do cartão
+  async function handlePagarCartao(cartao) {
+    if (!cartao.fatura) return;
+    const ok = await confirmar(`Marcar fatura do ${cartao.name} (${formatarMoeda(cartao.totalMes)}) como paga?`);
+    if (!ok) return;
+    try {
+      const token = await usuario.getIdToken();
+      const accountId = contas.length > 0 ? contas[0].id : '';
+      await invoiceService.payInvoice(token, cartao.fatura.id, {
+        accountId,
+        paidAt: new Date().toISOString(),
+        amount: cartao.totalMes
+      });
+      toast.sucesso(`Fatura do ${cartao.name} paga!`);
+      await carregarDados();
+    } catch (erro) {
+      toast.erro("Erro ao pagar fatura.");
+    }
+  }
+
+  // Urgência do cartão baseada no dia de vencimento
+  function getUrgenciaCartao(cartao) {
+    if (cartao.fatura?.status === 'paga') return 'pago';
+    if (cartao.totalMes === 0) return 'pago'; // sem compras = sem urgência
+
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    const [ano, mes] = mesAtual.split('-');
+    const dueDay = cartao.dueDay || 1;
+    const vencimento = new Date(parseInt(ano), parseInt(mes) - 1, Math.min(dueDay, 28));
+
+    const diffDias = Math.ceil((vencimento - hoje) / (1000 * 60 * 60 * 24));
+
+    if (diffDias < 0) return 'vencido';
+    if (diffDias === 0) return 'vence-hoje';
+    if (diffDias === 1) return 'vence-amanha';
+    return 'pendente';
+  }
+
+  function getBordaCartao(urgencia) {
+    switch (urgencia) {
+      case 'vencido': return '3px solid var(--cor-erro)';
+      case 'vence-hoje': return '3px solid var(--cor-erro)';
+      case 'vence-amanha': return '3px solid var(--cor-alerta)';
+      case 'pendente': return '3px solid var(--cor-borda-hover)';
+      default: return '3px solid var(--cor-sucesso)';
+    }
+  }
+
+  function getTextoUrgenciaCartao(urgencia) {
+    switch (urgencia) {
+      case 'vencido': return { texto: 'VENCIDA', cor: 'var(--cor-erro)' };
+      case 'vence-hoje': return { texto: 'VENCE HOJE', cor: 'var(--cor-erro)' };
+      case 'vence-amanha': return { texto: 'VENCE AMANHÃ', cor: 'var(--cor-alerta)' };
+      default: return null;
     }
   }
 
@@ -430,18 +519,30 @@ export default function Dashboard() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {cartoes.map(cartao => {
                   const isExpanded = cartaoExpandido === cartao.id;
+                  const urgencia = getUrgenciaCartao(cartao);
+                  const textoUrg = getTextoUrgenciaCartao(urgencia);
+                  const isPago = urgencia === 'pago';
                   return (
                     <div key={cartao.id}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--espacamento-sm)', padding: '10px 12px', background: 'var(--cor-fundo-card)', borderRadius: isExpanded ? 'var(--raio-borda-md) var(--raio-borda-md) 0 0' : 'var(--raio-borda-md)', border: '1px solid var(--cor-borda)' }}>
-                        <CreditCard size={18} color="var(--cor-alerta)" />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--espacamento-sm)', padding: '10px 12px', background: 'var(--cor-fundo-card)', borderRadius: isExpanded ? 'var(--raio-borda-md) var(--raio-borda-md) 0 0' : 'var(--raio-borda-md)', border: '1px solid var(--cor-borda)', borderLeft: getBordaCartao(urgencia), opacity: isPago ? 0.6 : 1 }}>
+                        {isPago
+                          ? <CheckCircle2 size={18} color="var(--cor-sucesso)" />
+                          : <button onClick={() => handlePagarCartao(cartao)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }} title="Marcar fatura como paga"><Clock size={18} color="var(--cor-alerta)" /></button>
+                        }
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <span style={{ fontSize: '14px', fontWeight: 500 }}>{cartao.name}</span>
                           <span style={{ marginLeft: '8px', fontSize: '11px', color: 'var(--cor-texto-terciario)' }}>•••• {cartao.lastDigits}</span>
                           {cartao.qtdCompras > 0 && (
                             <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--cor-texto-terciario)' }}>({cartao.qtdCompras} {cartao.qtdCompras === 1 ? 'compra' : 'compras'})</span>
                           )}
+                          {textoUrg && (
+                            <span style={{ marginLeft: '8px', fontSize: '10px', fontWeight: 700, color: textoUrg.cor }}>{textoUrg.texto}</span>
+                          )}
+                          {isPago && (
+                            <span style={{ marginLeft: '8px', fontSize: '10px', fontWeight: 700, color: 'var(--cor-sucesso)' }}>PAGA</span>
+                          )}
                         </div>
-                        <span style={{ fontWeight: 600, color: 'var(--cor-alerta)', fontSize: '14px', whiteSpace: 'nowrap' }}>{formatarMoeda(cartao.totalMes)}</span>
+                        <span style={{ fontWeight: 600, color: isPago ? 'var(--cor-sucesso)' : 'var(--cor-alerta)', fontSize: '14px', whiteSpace: 'nowrap' }}>{formatarMoeda(cartao.totalMes)}</span>
                         <button onClick={() => handleExpandirCartao(cartao)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', color: 'var(--cor-texto-secundario)', display: 'flex' }} title="Ver compras">
                           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </button>

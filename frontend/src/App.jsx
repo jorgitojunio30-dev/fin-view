@@ -98,6 +98,8 @@ function AppRoutes() {
 
 import { WalletProvider } from './contexts/WalletContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ToastProvider } from './components/UI/Toast';
+import { ConfirmProvider } from './components/UI/ConfirmDialog';
 
 export default function App() {
   return (
@@ -105,7 +107,11 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <WalletProvider>
-            <AppRoutes />
+            <ToastProvider>
+              <ConfirmProvider>
+                <AppRoutes />
+              </ConfirmProvider>
+            </ToastProvider>
           </WalletProvider>
         </AuthProvider>
       </ThemeProvider>
