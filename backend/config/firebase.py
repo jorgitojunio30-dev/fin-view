@@ -2,12 +2,11 @@ import firebase_admin
 from firebase_admin import credentials, firestore, auth
 import os
 import json
+import sys
 
 # Inicializa Firebase Admin SDK
-# Tenta carregar as credenciais de diferentes formas:
-# 1. Variável de ambiente com o JSON completo (melhor para Render)
-# 2. Variável de ambiente com o caminho do arquivo
-# 3. Caminho padrão local
+# Em produção (Render): defina FIREBASE_CREDENTIALS_JSON com o conteúdo do JSON
+# Em desenvolvimento: usa o arquivo firebase-credentials.json local
 
 firebase_json = os.getenv("FIREBASE_CREDENTIALS_JSON")
 caminho_credenciais = os.getenv(
@@ -17,22 +16,32 @@ caminho_credenciais = os.getenv(
 
 if not firebase_admin._apps:
     if firebase_json:
-        # Carrega direto do JSON string na variável de ambiente
         try:
             cred_dict = json.loads(firebase_json)
             cred = credentials.Certificate(cred_dict)
             firebase_admin.initialize_app(cred)
+            print("Firebase inicializado via FIREBASE_CREDENTIALS_JSON")
+        except json.JSONDecodeError as e:
+            print(f"ERRO FATAL: FIREBASE_CREDENTIALS_JSON contém JSON inválido: {e}", file=sys.stderr)
+            raise
         except Exception as e:
-            print(f"Erro ao carregar FIREBASE_CREDENTIALS_JSON: {e}")
-            if os.path.exists(caminho_credenciais):
-                cred = credentials.Certificate(caminho_credenciais)
-                firebase_admin.initialize_app(cred)
-            else:
-                firebase_admin.initialize_app()
+            print(f"ERRO FATAL: Falha ao inicializar Firebase com FIREBASE_CREDENTIALS_JSON: {e}", file=sys.stderr)
+            raise
     elif os.path.exists(caminho_credenciais):
-        cred = credentials.Certificate(caminho_credenciais)
-        firebase_admin.initialize_app(cred)
+        try:
+            cred = credentials.Certificate(caminho_credenciais)
+            firebase_admin.initialize_app(cred)
+            print(f"Firebase inicializado via arquivo: {caminho_credenciais}")
+        except Exception as e:
+            print(f"ERRO FATAL: Falha ao inicializar Firebase com arquivo de credenciais: {e}", file=sys.stderr)
+            raise
     else:
-        firebase_admin.initialize_app()
+        print(
+            "ERRO FATAL: Nenhuma credencial Firebase encontrada.\n"
+            "  - Em produção: defina a variável FIREBASE_CREDENTIALS_JSON\n"
+            f"  - Em desenvolvimento: crie o arquivo {caminho_credenciais}",
+            file=sys.stderr
+        )
+        raise RuntimeError("Credenciais Firebase não configuradas")
 
 db = firestore.client()

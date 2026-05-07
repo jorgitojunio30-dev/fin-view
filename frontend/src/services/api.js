@@ -1,4 +1,7 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Em desenvolvimento, VITE_API_URL deve ser '' (vazio) para usar o proxy do Vite.
+// Em produção, defina VITE_API_URL com a URL completa do backend.
+// Ex: VITE_API_URL=https://fin-view-api.onrender.com
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 /**
  * Faz uma requisição autenticada para a API.

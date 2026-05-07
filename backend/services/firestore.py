@@ -1,6 +1,8 @@
 from config.firebase import db
 from datetime import datetime
 from google.cloud.firestore import SERVER_TIMESTAMP
+from google.cloud.firestore_v1.base_query import FieldFilter
+
 
 def get_user_collection_ref(user_id: str, collection_name: str):
     return db.collection("users").document(user_id).collection(collection_name)
@@ -44,14 +46,19 @@ def delete_document(user_id: str, collection_name: str, doc_id: str):
     doc_ref.delete()
     return True
 
+def _apply_filters(query, filters: list):
+    """Apply a list of (field, op, value) tuples using the FieldFilter API."""
+    for field, op, val in filters:
+        query = query.where(filter=FieldFilter(field, op, val))
+    return query
+
 def query_documents(user_id: str, collection_name: str, filters: list):
     """
     filters: list of tuples (field, operator, value)
     """
     query = get_user_collection_ref(user_id, collection_name)
-    for field, op, val in filters:
-        query = query.where(field, op, val)
-    
+    query = _apply_filters(query, filters)
+
     docs = query.stream()
     result = []
     for doc in docs:
@@ -62,9 +69,8 @@ def query_documents(user_id: str, collection_name: str, filters: list):
 
 def batch_update_documents(user_id: str, collection_name: str, filters: list, data: dict):
     query = get_user_collection_ref(user_id, collection_name)
-    for field, op, val in filters:
-        query = query.where(field, op, val)
-    
+    query = _apply_filters(query, filters)
+
     docs = list(query.stream())
     count = 0
     # Firestore batch limit is 500 operations
@@ -80,9 +86,8 @@ def batch_update_documents(user_id: str, collection_name: str, filters: list, da
 
 def batch_delete_documents(user_id: str, collection_name: str, filters: list):
     query = get_user_collection_ref(user_id, collection_name)
-    for field, op, val in filters:
-        query = query.where(field, op, val)
-    
+    query = _apply_filters(query, filters)
+
     docs = list(query.stream())
     count = 0
     # Firestore batch limit is 500 operations
