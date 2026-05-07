@@ -42,11 +42,12 @@ def update_card(card_id: str, card: CardUpdate, request: Request):
 @router.delete("/{card_id}")
 def delete_card(card_id: str, request: Request):
     user_id = request.state.user_id
-    # In a real app, we should also delete associated purchases
     success = delete_document(user_id, CARDS_COLLECTION, card_id)
     if not success:
         raise HTTPException(status_code=404, detail="Cartão não encontrado")
-    return {"message": "Cartão excluído com sucesso"}
+    # Also delete all purchases associated with this card
+    batch_delete_documents(user_id, PURCHASES_COLLECTION, [('cardId', '==', card_id)])
+    return {"message": "Cartão e compras associadas excluídos com sucesso"}
 
 # Purchases
 @router.post("/purchases")

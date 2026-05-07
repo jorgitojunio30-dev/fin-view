@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from middleware.auth import verificar_token
 from services.firestore import (
     get_all_documents, get_document, create_document, update_document, delete_document,
-    batch_update_documents, batch_delete_documents
+    query_documents, batch_update_documents, batch_delete_documents
 )
 from .schemas import ExpenseCreate, ExpenseUpdate
 
@@ -20,17 +20,20 @@ COLLECTION_NAME = "expenses"
 @router.get("/")
 def get_expenses(request: Request, month: str = None, account_id: str = None, type: str = None):
     user_id = request.state.user_id
-    expenses = get_all_documents(user_id, COLLECTION_NAME)
-    
-    if month:
-        expenses = [e for e in expenses if e.get('month') == month]
-        
-    if account_id:
-        expenses = [e for e in expenses if e.get('accountId') == account_id]
 
+    filters = []
+    if month:
+        filters.append(('month', '==', month))
+    if account_id:
+        filters.append(('accountId', '==', account_id))
     if type:
-        expenses = [e for e in expenses if e.get('type') == type]
-        
+        filters.append(('type', '==', type))
+
+    if filters:
+        expenses = query_documents(user_id, COLLECTION_NAME, filters)
+    else:
+        expenses = get_all_documents(user_id, COLLECTION_NAME)
+
     # Sort by date descending
     expenses.sort(key=lambda x: x.get('date', ''), reverse=True)
     return expenses

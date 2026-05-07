@@ -139,6 +139,14 @@ class InvoiceUpdate(BaseModel):
     paidAt: Optional[datetime] = None
     accountId: Optional[str] = None
     totalAmount: Optional[float] = None
+    cardId: Optional[str] = None
+    month: Optional[str] = None
+    dueDate: Optional[datetime] = None
+
+class InvoicePayRequest(BaseModel):
+    accountId: str
+    paidAt: Optional[str] = None
+    amount: Optional[float] = None
 
 class InvoiceResponse(InvoiceBase):
     id: str

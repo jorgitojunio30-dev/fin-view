@@ -51,9 +51,9 @@ export default function Accounts() {
       const token = await usuario.getIdToken();
       
       if (contaEditando) {
-        await accountService.updateAccount(contaEditando.id, dados, token);
+        await accountService.updateAccount(token, contaEditando.id, dados);
       } else {
-        await accountService.createAccount(dados, token);
+        await accountService.createAccount(token, dados);
       }
       
       await carregarContas();
@@ -72,7 +72,7 @@ export default function Accounts() {
     try {
       setCarregando(true);
       const token = await usuario.getIdToken();
-      await accountService.deleteAccount(id, token);
+      await accountService.deleteAccount(token, id);
       await carregarContas();
     } catch (erro) {
       console.error("Erro ao excluir conta:", erro);

@@ -95,9 +95,9 @@ export default function Revenues() {
       const token = await usuario.getIdToken();
       
       if (receitaEditando) {
-        await revenueService.updateRevenue(receitaEditando.id, dados, token);
+        await revenueService.updateRevenue(token, receitaEditando.id, dados);
       } else {
-        await revenueService.createRevenue(dados, token);
+        await revenueService.createRevenue(token, dados);
       }
       
       await carregarDados();
@@ -116,7 +116,7 @@ export default function Revenues() {
     try {
       setCarregando(true);
       const token = await usuario.getIdToken();
-      await revenueService.deleteRevenue(id, token);
+      await revenueService.deleteRevenue(token, id);
       await carregarDados();
     } catch (erro) {
       console.error("Erro ao excluir receita:", erro);

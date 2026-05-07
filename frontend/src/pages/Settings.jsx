@@ -66,7 +66,7 @@ export default function Settings() {
         <p style={{ fontSize: '14px', color: 'var(--cor-texto-secundario)', marginBottom: '10px' }}>
           Receba um link de redefinição de senha no seu e-mail.
         </p>
-        <Button onClick={handleRecuperarSenha} variant="secondary">Redefinir Senha</Button>
+        <Button onClick={handleRecuperarSenha} variante="secundario">Redefinir Senha</Button>
       </Card>
 
       <Card className="settings-card" style={{ marginTop: '20px', borderColor: 'var(--cor-erro)' }}>
@@ -74,7 +74,7 @@ export default function Settings() {
         <p style={{ fontSize: '14px', color: 'var(--cor-texto-secundario)', marginBottom: '10px' }}>
           Excluir sua conta é uma ação permanente.
         </p>
-        <Button onClick={handleExcluirConta} variant="danger">Excluir Conta</Button>
+        <Button onClick={handleExcluirConta} variante="perigo">Excluir Conta</Button>
       </Card>
       
       {sucesso && <p style={{ color: 'var(--cor-sucesso)', marginTop: '10px' }}>{sucesso}</p>}

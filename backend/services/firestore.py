@@ -65,14 +65,16 @@ def batch_update_documents(user_id: str, collection_name: str, filters: list, da
     for field, op, val in filters:
         query = query.where(field, op, val)
     
-    docs = query.stream()
-    batch = db.batch()
+    docs = list(query.stream())
     count = 0
-    for doc in docs:
-        batch.update(doc.reference, data)
-        count += 1
-    
-    if count > 0:
+    # Firestore batch limit is 500 operations
+    BATCH_SIZE = 500
+    for i in range(0, len(docs), BATCH_SIZE):
+        batch = db.batch()
+        chunk = docs[i:i + BATCH_SIZE]
+        for doc in chunk:
+            batch.update(doc.reference, data)
+            count += 1
         batch.commit()
     return count
 
@@ -81,13 +83,15 @@ def batch_delete_documents(user_id: str, collection_name: str, filters: list):
     for field, op, val in filters:
         query = query.where(field, op, val)
     
-    docs = query.stream()
-    batch = db.batch()
+    docs = list(query.stream())
     count = 0
-    for doc in docs:
-        batch.delete(doc.reference)
-        count += 1
-    
-    if count > 0:
+    # Firestore batch limit is 500 operations
+    BATCH_SIZE = 500
+    for i in range(0, len(docs), BATCH_SIZE):
+        batch = db.batch()
+        chunk = docs[i:i + BATCH_SIZE]
+        for doc in chunk:
+            batch.delete(doc.reference)
+            count += 1
         batch.commit()
     return count

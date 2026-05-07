@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from middleware.auth import verificar_token
 from services.firestore import query_documents
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 import calendar
 
 router = APIRouter(
@@ -16,14 +16,22 @@ def get_next_month_projection(request: Request):
     
     # 1. Calculate Next Month
     today = datetime.now()
-    next_month_date = today.replace(day=28) + timedelta(days=4) # Go to next month
-    next_month_str = next_month_date.strftime("%Y-%m")
+    # Reliable next month calculation
+    if today.month == 12:
+        next_month_str = f"{today.year + 1:04d}-01"
+    else:
+        next_month_str = f"{today.year:04d}-{today.month + 1:02d}"
     
     # 2. Expected Revenue (Average of last 3 months)
     last_3_months = []
     for i in range(1, 4):
-        m_date = today.replace(day=1) - timedelta(days=i*30)
-        m_str = m_date.strftime("%Y-%m")
+        # Go back i months reliably
+        m = today.month - i
+        y = today.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        m_str = f"{y:04d}-{m:02d}"
         revs = query_documents(user_id, "revenues", [('month', '==', m_str)])
         last_3_months.append(sum(r.get('amount', 0) for r in revs))
     
@@ -57,5 +65,3 @@ def get_next_month_projection(request: Request):
         "projectedBalance": balance_projected,
         "limitForVariables": max(0, balance_projected)
     }
-
-from datetime import timedelta # Needed for the replacement above

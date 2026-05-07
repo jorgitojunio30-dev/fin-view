@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from middleware.auth import verificar_token
-from services.firestore import get_all_documents, get_document, create_document, update_document, delete_document
+from services.firestore import get_all_documents, get_document, create_document, update_document, delete_document, query_documents
 from .schemas import RevenueCreate, RevenueUpdate
 
 router = APIRouter(
@@ -14,14 +14,18 @@ COLLECTION_NAME = "revenues"
 @router.get("/")
 def get_revenues(request: Request, month: str = None, account_id: str = None):
     user_id = request.state.user_id
-    revenues = get_all_documents(user_id, COLLECTION_NAME)
-    
+
+    filters = []
     if month:
-        revenues = [r for r in revenues if r.get('month') == month]
-        
+        filters.append(('month', '==', month))
     if account_id:
-        revenues = [r for r in revenues if r.get('accountId') == account_id]
-        
+        filters.append(('accountId', '==', account_id))
+
+    if filters:
+        revenues = query_documents(user_id, COLLECTION_NAME, filters)
+    else:
+        revenues = get_all_documents(user_id, COLLECTION_NAME)
+
     # Sort by date descending
     revenues.sort(key=lambda x: x.get('date', ''), reverse=True)
     return revenues

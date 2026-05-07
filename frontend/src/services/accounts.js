@@ -5,21 +5,21 @@ export const accountService = {
     return apiRequest('/api/accounts/', { method: 'GET' }, token);
   },
 
-  createAccount: async (data, token) => {
+  createAccount: async (token, data) => {
     return apiRequest('/api/accounts/', {
       method: 'POST',
       body: JSON.stringify(data),
     }, token);
   },
 
-  updateAccount: async (id, data, token) => {
+  updateAccount: async (token, id, data) => {
     return apiRequest(`/api/accounts/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
     }, token);
   },
 
-  deleteAccount: async (id, token) => {
+  deleteAccount: async (token, id) => {
     return apiRequest(`/api/accounts/${id}`, {
       method: 'DELETE',
     }, token);
