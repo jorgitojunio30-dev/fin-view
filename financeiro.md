@@ -9,7 +9,7 @@
 1. [Visão Geral do Projeto](#1-visão-geral-do-projeto)
 2. [Stack Tecnológica](#2-stack-tecnológica)
 3. [Módulo de Usuários e Autenticação](#3-módulo-de-usuários-e-autenticação)
-4. [Módulo de Contas Bancárias](#4-módulo-de-contas-bancárias)
+4. [Módulo de Carteiras](#4-módulo-de-carteiras)
 5. [Módulo de Cartões de Crédito](#5-módulo-de-cartões-de-crédito)
 6. [Módulo de Receitas](#6-módulo-de-receitas)
 7. [Módulo de Despesas](#7-módulo-de-despesas)
@@ -29,7 +29,7 @@ O sistema tem como objetivo oferecer uma plataforma web responsiva para gestão 
 ### Objetivos Principais
 
 - Registrar receitas e despesas mensais
-- Gerenciar múltiplas contas bancárias
+- Gerenciar múltiplas carteiras
 - Controlar cartões de crédito com parcelamento automático
 - Separar despesas fixas de variáveis
 - Projetar o próximo mês automaticamente
@@ -90,25 +90,25 @@ Todos os dados do sistema são vinculados ao `userId` do Firebase Auth. Cada usu
 
 ---
 
-## 4. Módulo de Contas Bancárias
+## 4. Módulo de Carteiras
 
-### Cadastro de Conta
+### Cadastro de Carteira
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
-| Nome | texto | Ex: Conta Nubank, Conta Bradesco |
-| Banco | texto | Nome do banco |
-| Tipo | seleção | Corrente ou Poupança |
+| Nome | texto | Ex: Carteira Nubank, Carteira Bradesco, Dinheiro |
+| Instituição | texto | Nome do banco ou instituição |
+| Tipo | seleção | Corrente, Poupança ou Outros |
 
 ### Funcionalidades
 
-- Listar todas as contas cadastradas
-- Adicionar nova conta
-- Editar conta existente
-- Excluir conta
-- Vincular receitas e despesas a uma conta específica
+- Listar todas as carteiras cadastradas
+- Adicionar nova carteira
+- Editar carteira existente
+- Excluir carteira
+- Vincular receitas e despesas a uma carteira específica
 
-> **Nota:** O saldo da conta é calculado com base nos lançamentos realizados (receitas - despesas), sem necessidade de informar saldo manualmente.
+> **Nota:** O saldo da carteira é calculado com base nos lançamentos realizados (receitas - despesas), sem necessidade de informar saldo manualmente.
 
 ---
 
@@ -163,7 +163,7 @@ Ao cadastrar uma compra parcelada, o sistema distribui automaticamente as parcel
 3. Usuário revisa as compras e confirma manualmente
 4. Fatura fica bloqueada para novos lançamentos naquele ciclo
 5. No vencimento, novo alerta: *"Fatura do [Cartão] vence amanhã — R$ X.XXX,XX"*
-6. Usuário marca como paga e informa qual conta bancária foi debitada
+6. Usuário marca como paga e informa qual carteira foi debitada
 
 > **Importante:** O usuário tem controle total. O sistema sugere o fechamento com base na data cadastrada, mas só efetiva quando o usuário confirmar. Isso evita problemas com feriados e ajustes bancários.
 
@@ -178,7 +178,7 @@ Ao cadastrar uma compra parcelada, o sistema distribui automaticamente as parcel
 | Descrição | texto | Ex: Salário, Freelance |
 | Valor | número | Valor recebido |
 | Categoria | seleção | Categoria da receita |
-| Conta bancária | seleção | Conta onde foi depositado |
+| Carteira | seleção | Carteira onde foi depositado |
 | Data | data | Data do recebimento |
 
 ### Categorias de Receita (padrão)
@@ -210,7 +210,7 @@ As categorias são personalizáveis: o usuário pode criar, editar e excluir cat
 | Valor | número | Valor da despesa |
 | Categoria | seleção | Categoria da despesa |
 | Tipo | seleção | Fixa ou Variável |
-| Conta bancária | seleção | Conta de onde saiu o dinheiro |
+| Carteira | seleção | Carteira de onde saiu o dinheiro |
 | Data | data | Data do pagamento |
 
 ### Despesas Fixas
@@ -274,7 +274,7 @@ A projeção é uma visão antecipada do próximo mês, gerada automaticamente p
 
 - Por mês e ano
 - Por categoria
-- Por conta bancária
+- Por carteira
 - Por cartão de crédito
 - Por período personalizado
 
@@ -304,14 +304,14 @@ users/
     createdAt:   timestamp
 ```
 
-### accounts — Contas Bancárias
+### wallets — Carteiras
 
 ```
-users/{userId}/accounts/
-  {accountId}/
+users/{userId}/wallets/
+  {walletId}/
     name:        string
-    bank:        string
-    type:        string  (corrente | poupanca)
+    institution: string
+    type:        string  (corrente | poupanca | outros)
     createdAt:   timestamp
 ```
 
@@ -358,7 +358,7 @@ users/{userId}/invoices/
     totalAmount:  number
     dueDate:      timestamp
     paidAt:       timestamp
-    accountId:    string   // conta usada no pagamento
+    walletId:     string   // carteira usada no pagamento
 ```
 
 ### revenues — Receitas
@@ -369,7 +369,7 @@ users/{userId}/revenues/
     description:  string
     amount:       number
     category:     string
-    accountId:    string
+    walletId:     string
     date:         timestamp
     month:        string   // YYYY-MM
 ```
@@ -382,7 +382,7 @@ users/{userId}/expenses/
     description:  string
     amount:       number
     category:     string
-    accountId:    string
+    walletId:     string
     type:         string   // fixa | variavel
     date:         timestamp
     month:        string   // YYYY-MM
@@ -426,14 +426,14 @@ users/{userId}/alerts/
 | Despesas | Gestão de saídas | Lista por mês (fixas e variáveis), CRUD |
 | Cartões | Gestão de cartões | Lista de cartões, fatura atual, compras |
 | Detalhe do Cartão | Visão de um cartão | Compras do mês, histórico de faturas |
-| Contas Bancárias | Gestão de contas | Lista de contas, saldos, CRUD |
+| Carteiras | Gestão de carteiras | Lista de carteiras, saldos, CRUD |
 | Relatórios | Gráficos e análises | Pizza, barras, evolução, comparativos |
 | Projeção | Visão do próximo mês | Fixas, parcelas, receita esperada, limite variável |
-| Configurações | Preferências | Perfil, senha, categorias, excluir conta |
+| Configurações | Preferences | Perfil, senha, categorias, excluir conta |
 
 ### Navegação Mobile
 
-Em dispositivos móveis, o menu principal será exibido como barra de navegação inferior com os 5 itens mais utilizados: Dashboard, Receitas, Despesas, Cartões e Relatórios. As demais telas (Contas, Projeção, Configurações) serão acessíveis por menu lateral ou ícone de perfil.
+Em dispositivos móveis, o menu principal será exibido como barra de navegação inferior com os 5 itens mais utilizados: Dashboard, Receitas, Despesas, Cartões e Relatórios. As demais telas (Carteiras, Projeção, Configurações) serão acessíveis por menu lateral ou ícone de perfil.
 
 ---
 
@@ -444,7 +444,7 @@ Sequência recomendada para ter algo funcional o mais rápido possível, evoluin
 | Fase | O que desenvolver | Resultado |
 |------|-------------------|-----------|
 | 1 | Autenticação (Firebase Auth) + estrutura base do projeto | Login e cadastro funcionando |
-| 2 | Contas bancárias (CRUD) | Cadastro de contas |
+| 2 | Carteiras (CRUD) | Cadastro de carteiras |
 | 3 | Receitas (CRUD + listagem por mês) | Lançamento de receitas |
 | 4 | Despesas variáveis (CRUD + listagem por mês) | Lançamento de despesas |
 | 5 | Despesas fixas (replicação automática) | Fixas replicadas nos meses futuros |

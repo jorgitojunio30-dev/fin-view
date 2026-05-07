@@ -11,16 +11,21 @@ from routes.reports import router as reports_router
 from routes.projections import router as projections_router
 from routes.alerts import router as alerts_router
 
+import os
+
 app = FastAPI(
     title="FinView API",
     description="API do Sistema de Gestão Financeira Familiar",
     version="1.0.0"
 )
 
-# CORS - permitir o frontend acessar a API
+# CORS - Configuração para permitir o frontend acessar a API
+# Em produção no Render, você pode definir a variável de ambiente ALLOWED_ORIGINS
+allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:5174,*").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:5174"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
