@@ -314,9 +314,12 @@ export default function Dashboard() {
 
   // Urgência do cartão baseada no dia de vencimento
   function getUrgenciaCartao(cartao) {
-    if (cartao.fatura?.status === 'paga') return 'pago';
-    if (cartao.totalMes === 0) return 'pago'; // sem compras = sem urgência
+    const status = cartao.fatura?.status;
 
+    if (status === 'paga') return 'pago';
+    if (!status || status === 'aberta') return 'aberta';
+
+    // Fechada — verificar vencimento
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     const [ano, mes] = mesAtual.split('-');
@@ -328,7 +331,7 @@ export default function Dashboard() {
     if (diffDias < 0) return 'vencido';
     if (diffDias === 0) return 'vence-hoje';
     if (diffDias === 1) return 'vence-amanha';
-    return 'pendente';
+    return 'fechada';
   }
 
   function getBordaCartao(urgencia) {
@@ -336,8 +339,9 @@ export default function Dashboard() {
       case 'vencido': return '3px solid var(--cor-erro)';
       case 'vence-hoje': return '3px solid var(--cor-erro)';
       case 'vence-amanha': return '3px solid var(--cor-alerta)';
-      case 'pendente': return '3px solid var(--cor-borda-hover)';
-      default: return '3px solid var(--cor-sucesso)';
+      case 'fechada': return '3px solid var(--cor-alerta)';
+      case 'pago': return '3px solid var(--cor-sucesso)';
+      default: return '3px solid var(--cor-borda-hover)'; // aberta
     }
   }
 
@@ -346,7 +350,9 @@ export default function Dashboard() {
       case 'vencido': return { texto: 'VENCIDA', cor: 'var(--cor-erro)' };
       case 'vence-hoje': return { texto: 'VENCE HOJE', cor: 'var(--cor-erro)' };
       case 'vence-amanha': return { texto: 'VENCE AMANHÃ', cor: 'var(--cor-alerta)' };
-      default: return null;
+      case 'fechada': return { texto: 'FECHADA', cor: 'var(--cor-alerta)' };
+      case 'pago': return { texto: 'PAGA', cor: 'var(--cor-sucesso)' };
+      default: return { texto: 'ABERTA', cor: 'var(--cor-primaria)' };
     }
   }
 
@@ -578,9 +584,6 @@ export default function Dashboard() {
                           <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--cor-texto-terciario)' }}>• venc. {cartao.dueDay}/{mesAtual.split('-')[1]}</span>
                           {textoUrg && (
                             <span style={{ marginLeft: '8px', fontSize: '10px', fontWeight: 700, color: textoUrg.cor }}>{textoUrg.texto}</span>
-                          )}
-                          {isPago && (
-                            <span style={{ marginLeft: '8px', fontSize: '10px', fontWeight: 700, color: 'var(--cor-sucesso)' }}>PAGA</span>
                           )}
                         </div>
                         <span style={{ fontWeight: 600, color: isPago ? 'var(--cor-sucesso)' : 'var(--cor-alerta)', fontSize: '14px', whiteSpace: 'nowrap' }}>{formatarMoeda(cartao.totalMes)}</span>

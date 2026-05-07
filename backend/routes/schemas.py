@@ -135,6 +135,7 @@ class PurchaseCreate(BaseModel):
     totalAmount: float
     installments: int
     date: datetime
+    month: str  # YYYY-MM — mês da primeira parcela (informado pelo usuário)
 
 class PurchaseResponse(PurchaseBase):
     id: str

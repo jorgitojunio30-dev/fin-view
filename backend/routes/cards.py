@@ -63,23 +63,18 @@ def create_purchase(purchase: PurchaseCreate, request: Request):
     if isinstance(base_date, str):
         base_date = datetime.fromisoformat(base_date.replace('Z', '+00:00'))
     
-    closing_day = card['closingDay']
     installment_amount = round(data['totalAmount'] / data['installments'], 2)
     
-    # Calculate the first installment month
-    # If purchase day > closing day, it goes to the next month
-    start_month_offset = 0
-    if base_date.day > closing_day:
-        start_month_offset = 1
+    # Usa o mês informado pelo usuário como primeira parcela
+    first_month = data['month']  # YYYY-MM
+    first_year, first_month_num = int(first_month.split('-')[0]), int(first_month.split('-')[1])
         
     first_doc_id = None
     for i in range(data['installments']):
-        current_offset = start_month_offset + i
-        
-        # Calculate installment month/year
-        new_month_idx = (base_date.month + current_offset - 1)
+        # Calculate installment month/year a partir do mês informado
+        new_month_idx = (first_month_num + i - 1)
         new_month = (new_month_idx % 12) + 1
-        new_year = base_date.year + (new_month_idx // 12)
+        new_year = first_year + (new_month_idx // 12)
         
         installment_month = f"{new_year:04d}-{new_month:02d}"
         
@@ -109,6 +104,22 @@ def get_purchases_by_month(month: str, request: Request, card_id: str = None):
         filters.append(('cardId', '==', card_id))
         
     return query_documents(user_id, PURCHASES_COLLECTION, filters)
+
+@router.put("/purchases/{purchase_id}")
+def update_purchase(purchase_id: str, request: Request, data: dict):
+    """Atualiza os campos de uma parcela individual."""
+    user_id = request.state.user_id
+    current = get_document(user_id, PURCHASES_COLLECTION, purchase_id)
+    if not current:
+        raise HTTPException(status_code=404, detail="Compra não encontrada")
+    # Campos permitidos para edição
+    allowed = {'description', 'amount', 'category', 'date', 'currentInstallment', 'installments'}
+    update_data = {k: v for k, v in data.items() if k in allowed and v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="Nenhum campo para atualizar")
+    update_document(user_id, PURCHASES_COLLECTION, purchase_id, update_data)
+    return {"message": "Compra atualizada com sucesso"}
+
 
 @router.delete("/purchases/{purchase_id}")
 def delete_purchase(purchase_id: str, request: Request):

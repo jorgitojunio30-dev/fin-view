@@ -6,7 +6,7 @@ import Select from '../UI/Select';
 import Button from '../UI/Button';
 import { FileText, DollarSign, Tag, Calendar, Hash } from 'lucide-react';
 
-export default function PurchaseForm({ cardId, onSubmit, onCancel, isLoading }) {
+export default function PurchaseForm({ cardId, month, onSubmit, onCancel, isLoading }) {
   const { usuario } = useAuth();
   const dataHoje = new Date().toISOString().split('T')[0];
 
@@ -27,7 +27,8 @@ export default function PurchaseForm({ cardId, onSubmit, onCancel, isLoading }) 
         const token = await usuario.getIdToken();
         const dados = await categoryService.getCategories(token, 'despesa');
         setCategorias(dados);
-        if (dados.length > 0) {
+        // Só define categoria padrão se o campo estiver vazio
+        if (dados.length > 0 && !formData.category) {
           setFormData(prev => ({ ...prev, category: dados[0].name }));
         }
       } catch (erro) {
@@ -47,7 +48,8 @@ export default function PurchaseForm({ cardId, onSubmit, onCancel, isLoading }) 
     const dataToSubmit = {
       ...formData,
       totalAmount: parseFloat(formData.totalAmount),
-      installments: parseInt(formData.installments)
+      installments: parseInt(formData.installments),
+      month: month  // mês da fatura selecionada na tela
     };
     onSubmit(dataToSubmit);
   };

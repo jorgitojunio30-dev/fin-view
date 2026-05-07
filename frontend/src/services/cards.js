@@ -43,5 +43,12 @@ export const cardService = {
     return apiRequest(`/api/cards/purchases/${purchaseId}`, {
       method: 'DELETE',
     }, token);
+  },
+
+  updatePurchase: async (token, purchaseId, data) => {
+    return apiRequest(`/api/cards/purchases/${purchaseId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }, token);
   }
 };

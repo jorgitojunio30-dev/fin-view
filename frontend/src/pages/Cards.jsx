@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/UI/Toast';
+import { useConfirm } from '../components/UI/ConfirmDialog';
 import { cardService } from '../services/cards';
 import { invoiceService } from '../services/invoices';
 import { accountService } from '../services/accounts';
@@ -11,12 +13,14 @@ import PurchaseForm from '../components/Forms/PurchaseForm';
 import InvoicePaymentForm from '../components/Forms/InvoicePaymentForm';
 import { 
   CreditCard, Plus, Edit2, Trash2, Calendar, ShoppingCart, 
-  ChevronLeft, ChevronRight, CheckCircle2, Lock, Unlock 
+  ChevronLeft, ChevronRight, CheckCircle2, Lock
 } from 'lucide-react';
 import './Cards.css';
 
 export default function Cards() {
   const { usuario } = useAuth();
+  const toast = useToast();
+  const confirmar = useConfirm();
   const [cartoes, setCartoes] = useState([]);
   const [compras, setCompras] = useState([]);
   const [contas, setContas] = useState([]);
@@ -31,7 +35,9 @@ export default function Cards() {
   const [modalCartaoAberto, setModalCartaoAberto] = useState(false);
   const [modalCompraAberto, setModalCompraAberto] = useState(false);
   const [modalPagamentoAberto, setModalPagamentoAberto] = useState(false);
+  const [modalEditarCompraAberto, setModalEditarCompraAberto] = useState(false);
   const [cartaoEditando, setCartaoEditando] = useState(null);
+  const [compraEditando, setCompraEditando] = useState(null);
   const [salvando, setSalvando] = useState(false);
 
   useEffect(() => {
@@ -75,7 +81,7 @@ export default function Cards() {
         invoiceService.getInvoices(token, cartaoSelecionado, mesAtual)
       ]);
       
-      setCompras(dadosCompras);
+      setCompras(dadosCompras.sort((a, b) => (b.date || '').localeCompare(a.date || '')));
       setFatura(dadosFaturas.length > 0 ? dadosFaturas[0] : null);
     } catch (erro) {
       console.error("Erro ao buscar compras/fatura:", erro);
@@ -104,30 +110,36 @@ export default function Cards() {
       const token = await usuario.getIdToken();
       if (cartaoEditando) {
         await cardService.updateCard(token, cartaoEditando.id, dados);
+        toast.sucesso("Cartão atualizado!");
       } else {
         await cardService.createCard(token, dados);
+        toast.sucesso("Cartão adicionado!");
       }
       await carregarDadosBase();
       setModalCartaoAberto(false);
       setCartaoEditando(null);
     } catch (erro) {
       console.error("Erro ao salvar cartão:", erro);
+      toast.erro("Erro ao salvar cartão.");
     } finally {
       setSalvando(false);
     }
   }
 
   async function handleExcluirCartao(id) {
-    if (!window.confirm("Excluir este cartão? Isso não apagará as compras já registradas.")) return;
+    const ok = await confirmar("Excluir este cartão e todas as compras associadas?");
+    if (!ok) return;
     try {
       const token = await usuario.getIdToken();
       await cardService.deleteCard(token, id);
+      toast.sucesso("Cartão excluído.");
       await carregarDadosBase();
       if (cartaoSelecionado === id) {
         setCartaoSelecionado(cartoes.find(c => c.id !== id)?.id || null);
       }
     } catch (erro) {
       console.error("Erro ao excluir cartão:", erro);
+      toast.erro("Erro ao excluir cartão.");
     }
   }
 
@@ -136,10 +148,12 @@ export default function Cards() {
       setSalvando(true);
       const token = await usuario.getIdToken();
       await cardService.createPurchase(token, dados);
+      toast.sucesso("Compra lançada!");
       await carregarComprasEFatura();
       setModalCompraAberto(false);
     } catch (erro) {
       console.error("Erro ao salvar compra:", erro);
+      toast.erro("Erro ao lançar compra.");
     } finally {
       setSalvando(false);
     }
@@ -147,21 +161,26 @@ export default function Cards() {
 
   async function handleExcluirCompra(id) {
     if (fatura && fatura.status !== 'aberta') {
-      alert("Não é possível excluir compras de uma fatura fechada ou paga.");
+      toast.aviso("Não é possível excluir compras de uma fatura fechada ou paga.");
       return;
     }
-    if (!window.confirm("Excluir esta parcela?")) return;
+    const ok = await confirmar("Excluir esta parcela?");
+    if (!ok) return;
     try {
       const token = await usuario.getIdToken();
       await cardService.deletePurchase(token, id);
+      toast.sucesso("Compra excluída.");
       await carregarComprasEFatura();
     } catch (erro) {
       console.error("Erro ao excluir compra:", erro);
+      toast.erro("Erro ao excluir compra.");
     }
   }
 
   async function handleFecharFatura() {
     if (!cartaoSelecionado || totalFatura === 0) return;
+    const ok = await confirmar("Fechar a fatura deste mês? Novas compras não poderão ser adicionadas.");
+    if (!ok) return;
     try {
       setSalvando(true);
       const token = await usuario.getIdToken();
@@ -178,9 +197,11 @@ export default function Cards() {
         dueDate: vencimento.toISOString()
       });
       
+      toast.sucesso("Fatura fechada!");
       await carregarComprasEFatura();
     } catch (erro) {
       console.error("Erro ao fechar fatura:", erro);
+      toast.erro("Erro ao fechar fatura.");
     } finally {
       setSalvando(false);
     }
@@ -192,10 +213,12 @@ export default function Cards() {
       setSalvando(true);
       const token = await usuario.getIdToken();
       await invoiceService.payInvoice(token, fatura.id, dadosPagamento);
+      toast.sucesso("Fatura paga!");
       await carregarComprasEFatura();
       setModalPagamentoAberto(false);
     } catch (erro) {
       console.error("Erro ao pagar fatura:", erro);
+      toast.erro("Erro ao pagar fatura.");
     } finally {
       setSalvando(false);
     }
@@ -338,12 +361,22 @@ export default function Cards() {
                       {formatarMoeda(compra.amount)}
                     </span>
                     {(!fatura || fatura.status === 'aberta') && (
-                      <button 
-                        onClick={() => handleExcluirCompra(compra.id)}
-                        style={{ background: 'none', border: 'none', color: 'var(--cor-erro)', cursor: 'pointer', padding: '4px' }}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div style={{ display: 'flex', gap: 'var(--espacamento-xs)' }}>
+                        <button 
+                          onClick={() => { setCompraEditando(compra); setModalEditarCompraAberto(true); }}
+                          style={{ background: 'none', border: 'none', color: 'var(--cor-texto-secundario)', cursor: 'pointer', padding: '4px' }}
+                          title="Editar"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                        <button 
+                          onClick={() => handleExcluirCompra(compra.id)}
+                          style={{ background: 'none', border: 'none', color: 'var(--cor-erro)', cursor: 'pointer', padding: '4px' }}
+                          title="Excluir"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </Card>
@@ -380,6 +413,7 @@ export default function Cards() {
       >
         <PurchaseForm 
           cardId={cartaoSelecionado}
+          month={mesAtual}
           onSubmit={handleSalvarCompra} 
           onCancel={() => setModalCompraAberto(false)}
           isLoading={salvando}
@@ -399,6 +433,117 @@ export default function Cards() {
           isLoading={salvando}
         />
       </Modal>
+
+      <Modal
+        aberto={modalEditarCompraAberto}
+        aoFechar={() => { setModalEditarCompraAberto(false); setCompraEditando(null); }}
+        titulo="Editar Compra"
+      >
+        {compraEditando && (
+          <EditPurchaseForm
+            compra={compraEditando}
+            onSubmit={async (dados) => {
+              try {
+                setSalvando(true);
+                const token = await usuario.getIdToken();
+                await cardService.updatePurchase(token, compraEditando.id, dados);
+                toast.sucesso("Compra atualizada!");
+                await carregarComprasEFatura();
+                setModalEditarCompraAberto(false);
+                setCompraEditando(null);
+              } catch (erro) {
+                toast.erro("Erro ao editar compra.");
+              } finally {
+                setSalvando(false);
+              }
+            }}
+            onCancel={() => { setModalEditarCompraAberto(false); setCompraEditando(null); }}
+            isLoading={salvando}
+          />
+        )}
+      </Modal>
     </div>
+  );
+}
+
+function EditPurchaseForm({ compra, onSubmit, onCancel, isLoading }) {
+  const [formData, setFormData] = useState({
+    description: compra.description || '',
+    amount: compra.amount || '',
+    category: compra.category || '',
+    date: compra.date ? compra.date.split('T')[0] : '',
+    currentInstallment: compra.currentInstallment || 1,
+    installments: compra.installments || 1
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSubmit({
+      ...formData,
+      amount: parseFloat(formData.amount),
+      currentInstallment: parseInt(formData.currentInstallment),
+      installments: parseInt(formData.installments)
+    });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espacamento-md)' }}>
+      <div className="campo-grupo">
+        <label className="campo-label">Descrição *</label>
+        <div className="campo-wrapper">
+          <input className="campo-input" name="description" value={formData.description} onChange={handleChange} required />
+        </div>
+      </div>
+
+      <div className="campo-grupo">
+        <label className="campo-label">Valor (R$) *</label>
+        <div className="campo-wrapper">
+          <input className="campo-input" name="amount" type="number" step="0.01" value={formData.amount} onChange={handleChange} required />
+        </div>
+      </div>
+
+      <div className="campo-grupo">
+        <label className="campo-label">Categoria *</label>
+        <div className="campo-wrapper">
+          <input className="campo-input" name="category" value={formData.category} onChange={handleChange} required />
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--espacamento-md)' }}>
+        <div className="campo-grupo">
+          <label className="campo-label">Parcela nº</label>
+          <div className="campo-wrapper">
+            <input className="campo-input" name="currentInstallment" type="number" min="1" value={formData.currentInstallment} onChange={handleChange} />
+          </div>
+        </div>
+        <div className="campo-grupo">
+          <label className="campo-label">Total de parcelas</label>
+          <div className="campo-wrapper">
+            <input className="campo-input" name="installments" type="number" min="1" value={formData.installments} onChange={handleChange} />
+          </div>
+        </div>
+      </div>
+
+      <div className="campo-grupo">
+        <label className="campo-label">Data</label>
+        <div className="campo-wrapper">
+          <input className="campo-input" name="date" type="date" value={formData.date} onChange={handleChange} />
+        </div>
+      </div>
+
+      <p style={{ fontSize: '12px', color: 'var(--cor-texto-terciario)' }}>
+        Total original da compra: R$ {(parseFloat(formData.amount || 0) * parseInt(formData.installments || 1)).toFixed(2)}
+      </p>
+
+      <div style={{ display: 'flex', gap: 'var(--espacamento-sm)', justifyContent: 'flex-end' }}>
+        <Button variante="secundario" onClick={onCancel} disabled={isLoading}>Cancelar</Button>
+        <Button tipo="submit" variante="primario" carregando={isLoading}>Salvar</Button>
+      </div>
+    </form>
   );
 }
