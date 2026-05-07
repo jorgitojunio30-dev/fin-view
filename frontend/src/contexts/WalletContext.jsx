@@ -32,7 +32,7 @@ export function WalletProvider({ children }) {
       } catch (erro) {
         console.error("Erro ao carregar carteiras:", erro);
       } finally {
-        setCarregando(false);
+        setCarregandoCarteiras(false);
       }
     }
 

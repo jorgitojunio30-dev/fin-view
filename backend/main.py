@@ -21,12 +21,14 @@ app = FastAPI(
 
 # CORS - Configuração para permitir o frontend acessar a API
 # Em produção no Render, você pode definir a variável de ambiente ALLOWED_ORIGINS
-allowed_origins = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:5174,*").split(",")
+# Ex: ALLOWED_ORIGINS=https://seu-frontend.onrender.com
+allowed_origins_raw = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000,http://localhost:5174")
+allowed_origins = [origin.strip() for origin in allowed_origins_raw.split(",")]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_credentials=False,  # Definido como False para suportar '*' em allow_origins
     allow_methods=["*"],
     allow_headers=["*"],
 )
