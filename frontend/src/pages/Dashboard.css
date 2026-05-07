@@ -1,0 +1,111 @@
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--espacamento-md);
+  margin-bottom: var(--espacamento-xl);
+}
+
+.resumo-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.resumo-rotulo {
+  font-size: var(--fonte-tamanho-sm);
+  color: var(--cor-texto-secundario);
+  margin-bottom: var(--espacamento-xs);
+}
+
+.resumo-valor {
+  font-size: var(--fonte-tamanho-2xl);
+  font-weight: 800;
+}
+
+.resumo-primario { color: var(--cor-primaria); }
+.resumo-sucesso { color: var(--cor-sucesso); }
+.resumo-erro { color: var(--cor-erro); }
+.resumo-alerta { color: var(--cor-alerta); }
+
+/* Alertas */
+.dashboard-alertas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-sm);
+  margin-bottom: var(--espacamento-xl);
+}
+
+.alerta-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--espacamento-md);
+  border-radius: var(--raio-md);
+  border: 1px solid var(--cor-borda);
+  animation: slideInLeft 0.3s ease;
+}
+
+.alerta-corpo {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-md);
+  font-size: var(--fonte-tamanho-sm);
+  font-weight: 500;
+}
+
+.alerta-link {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-xs);
+  font-size: var(--fonte-tamanho-xs);
+  font-weight: 600;
+  color: var(--cor-texto-secundario);
+  transition: color var(--transicao-rapida);
+}
+
+.alerta-link:hover {
+  color: var(--cor-texto);
+}
+
+.alerta-info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.alerta-warning {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.alerta-danger {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.dashboard-secoes {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--espacamento-md);
+}
+
+.dashboard-secao h3 {
+  font-size: var(--fonte-tamanho-base);
+  font-weight: 600;
+  margin-bottom: var(--espacamento-md);
+}
+
+.dashboard-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--espacamento-2xl);
+  color: var(--cor-texto-terciario);
+  text-align: center;
+  gap: var(--espacamento-sm);
+}
+
+@media (max-width: 768px) {
+  .dashboard-secoes {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,71 @@
+.campo-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.campo-label {
+  font-size: var(--fonte-tamanho-sm);
+  color: var(--cor-texto-secundario);
+  font-weight: 500;
+}
+
+.campo-obrigatorio {
+  color: var(--cor-erro);
+}
+
+.campo-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.campo-wrapper.com-icone .campo-input {
+  padding-left: 42px;
+}
+
+.campo-icone {
+  position: absolute;
+  left: 14px;
+  color: var(--cor-texto-terciario);
+  pointer-events: none;
+  transition: color var(--transicao-rapida);
+}
+
+.campo-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--cor-fundo-input);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-md);
+  color: var(--cor-texto);
+  font-size: var(--fonte-tamanho-sm);
+  transition: all var(--transicao-rapida);
+}
+
+.campo-input::placeholder {
+  color: var(--cor-texto-terciario);
+}
+
+.campo-input:focus {
+  border-color: var(--cor-borda-foco);
+  box-shadow: 0 0 0 3px var(--cor-primaria-transparente);
+}
+
+.campo-input:focus ~ .campo-icone,
+.campo-wrapper:focus-within .campo-icone {
+  color: var(--cor-primaria);
+}
+
+.campo-wrapper.campo-erro .campo-input {
+  border-color: var(--cor-erro);
+}
+
+.campo-wrapper.campo-erro .campo-input:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.campo-erro-texto {
+  font-size: var(--fonte-tamanho-xs);
+  color: var(--cor-erro);
+}

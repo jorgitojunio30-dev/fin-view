@@ -1,0 +1,28 @@
+.settings-card { padding: 20px; }
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--espacamento-xl);
+  align-items: start;
+}
+
+.settings-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacamento-lg);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+  margin-bottom: var(--espacamento-lg);
+  padding-bottom: var(--espacamento-sm);
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.settings-header h3 {
+  font-size: var(--fonte-tamanho-lg);
+  font-weight: 600;
+}

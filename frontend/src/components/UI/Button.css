@@ -1,0 +1,109 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espacamento-sm);
+  font-weight: 600;
+  border-radius: var(--raio-md);
+  transition: all var(--transicao-rapida);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity var(--transicao-rapida);
+}
+
+.btn:hover::after {
+  opacity: 1;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn:disabled::after {
+  display: none;
+}
+
+/* Sizes */
+.btn-sm {
+  padding: 6px 14px;
+  font-size: var(--fonte-tamanho-xs);
+}
+
+.btn-md {
+  padding: 10px 20px;
+  font-size: var(--fonte-tamanho-sm);
+}
+
+.btn-lg {
+  padding: 14px 28px;
+  font-size: var(--fonte-tamanho-base);
+}
+
+/* Variants */
+.btn-primario {
+  background: var(--gradiente-primario);
+  color: white;
+  box-shadow: 0 2px 10px rgba(99, 102, 241, 0.3);
+}
+
+.btn-primario:hover:not(:disabled) {
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-secundario {
+  background: var(--cor-fundo-input);
+  color: var(--cor-texto);
+  border: 1px solid var(--cor-borda);
+}
+
+.btn-secundario:hover:not(:disabled) {
+  border-color: var(--cor-primaria);
+  background: var(--cor-primaria-transparente);
+}
+
+.btn-fantasma {
+  background: transparent;
+  color: var(--cor-texto-secundario);
+}
+
+.btn-fantasma:hover:not(:disabled) {
+  background: var(--cor-fundo-input);
+  color: var(--cor-texto);
+}
+
+.btn-perigo {
+  background: var(--gradiente-erro);
+  color: white;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.3);
+}
+
+.btn-perigo:hover:not(:disabled) {
+  box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-sucesso {
+  background: var(--gradiente-sucesso);
+  color: white;
+  box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+.btn-sucesso:hover:not(:disabled) {
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-bloco {
+  width: 100%;
+}

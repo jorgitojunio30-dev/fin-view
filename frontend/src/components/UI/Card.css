@@ -1,0 +1,52 @@
+.card {
+  background: var(--gradiente-card);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio-lg);
+  padding: var(--espacamento-lg);
+  transition: all var(--transicao-normal);
+}
+
+.card-clicavel {
+  cursor: pointer;
+}
+
+.card-clicavel:hover {
+  border-color: var(--cor-borda-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--sombra-md);
+}
+
+.card-icone {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--raio-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--espacamento-md);
+}
+
+.card-icone-primario {
+  background: var(--cor-primaria-transparente);
+  color: var(--cor-primaria);
+}
+
+.card-icone-sucesso {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--cor-sucesso);
+}
+
+.card-icone-erro {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--cor-erro);
+}
+
+.card-icone-alerta {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--cor-alerta);
+}
+
+.card-icone-info {
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--cor-info);
+}

@@ -1,0 +1,92 @@
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--sidebar-largura);
+  background: var(--cor-fundo-sidebar);
+  border-right: 1px solid var(--cor-borda);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform var(--transicao-normal);
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+  padding: var(--espacamento-lg) var(--espacamento-xl);
+  font-size: var(--fonte-tamanho-xl);
+  font-weight: 800;
+  background: var(--gradiente-primario);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.sidebar-logo svg {
+  color: var(--cor-primaria);
+  -webkit-text-fill-color: initial;
+  flex-shrink: 0;
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: var(--espacamento-md) var(--espacamento-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+  padding: var(--espacamento-sm) var(--espacamento-md);
+  border-radius: var(--raio-md);
+  color: var(--cor-texto-secundario);
+  font-size: var(--fonte-tamanho-sm);
+  font-weight: 500;
+  transition: all var(--transicao-rapida);
+  text-decoration: none;
+}
+
+.sidebar-link:hover {
+  background: var(--cor-primaria-transparente);
+  color: var(--cor-texto);
+}
+
+.sidebar-link.ativo {
+  background: var(--gradiente-primario);
+  color: white;
+  box-shadow: var(--sombra-glow);
+}
+
+.sidebar-logout {
+  display: flex;
+  align-items: center;
+  gap: var(--espacamento-sm);
+  padding: var(--espacamento-md) var(--espacamento-xl);
+  color: var(--cor-texto-terciario);
+  font-size: var(--fonte-tamanho-sm);
+  font-weight: 500;
+  background: none;
+  border-top: 1px solid var(--cor-borda);
+  transition: all var(--transicao-rapida);
+  width: 100%;
+  text-align: left;
+}
+
+.sidebar-logout:hover {
+  color: var(--cor-erro);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+}
