@@ -4,7 +4,7 @@
   left: var(--sidebar-largura);
   right: 0;
   height: var(--header-altura);
-  background: rgba(10, 14, 23, 0.85);
+  background: var(--cor-fundo-header);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--cor-borda);
   display: flex;
@@ -212,5 +212,50 @@
 @media (max-width: 768px) {
   .header {
     left: 0;
+    padding: 0 var(--espacamento-md);
+    gap: var(--espacamento-sm);
+  }
+
+  .header-esquerda {
+    gap: var(--espacamento-sm);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .header-saudacao {
+    display: none;
+  }
+
+  .header-carteira-seletor {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .header-carteira-select {
+    width: 100%;
+    min-width: 0;
+    font-size: var(--fonte-tamanho-xs);
+  }
+
+  .header-direita {
+    gap: var(--espacamento-sm);
+  }
+
+  .header-icone-btn {
+    padding: 6px;
+  }
+
+  .header-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 13px;
+  }
+
+  .header-alerta-painel {
+    position: fixed;
+    top: var(--header-altura);
+    left: var(--espacamento-md);
+    right: var(--espacamento-md);
+    width: auto;
   }
 }

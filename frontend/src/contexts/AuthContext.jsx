@@ -18,11 +18,21 @@ export function AuthProvider({ children }) {
   const [carregando, setCarregando] = useState(true);
 
   useEffect(() => {
+    // Timeout de segurança — se o Firebase não responder em 10s, libera o carregamento
+    const timeout = setTimeout(() => {
+      setCarregando(false);
+    }, 10000);
+
     const cancelar = onAuthStateChanged(auth, (user) => {
+      clearTimeout(timeout);
       setUsuario(user);
       setCarregando(false);
     });
-    return cancelar;
+
+    return () => {
+      clearTimeout(timeout);
+      cancelar();
+    };
   }, []);
 
   async function cadastrar(nome, email, senha) {

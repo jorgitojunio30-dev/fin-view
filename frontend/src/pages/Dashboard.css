@@ -108,4 +108,31 @@
   .dashboard-secoes {
     grid-template-columns: 1fr;
   }
+
+  .dashboard-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--espacamento-sm);
+  }
+
+  .resumo-card {
+    padding: var(--espacamento-sm) var(--espacamento-md) !important;
+  }
+
+  .resumo-card .card-icone {
+    width: 28px;
+    height: 28px;
+  }
+
+  .resumo-card .card-icone svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .resumo-rotulo {
+    font-size: var(--fonte-tamanho-xs);
+  }
+
+  .resumo-valor {
+    font-size: var(--fonte-tamanho-lg);
+  }
 }

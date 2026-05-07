@@ -14,7 +14,6 @@ import Expenses from './pages/Expenses';
 import Categories from './pages/Categories';
 import Cards from './pages/Cards';
 import Reports from './pages/Reports';
-import Projection from './pages/Projection';
 import Settings from './pages/Settings';
 import { useAuth } from './hooks/useAuth';
 
@@ -85,11 +84,6 @@ function AppRoutes() {
           <AppLayout><Reports /></AppLayout>
         </RotaProtegida>
       } />
-      <Route path="/projecao" element={
-        <RotaProtegida>
-          <AppLayout><Projection /></AppLayout>
-        </RotaProtegida>
-      } />
       <Route path="/configuracoes" element={
         <RotaProtegida>
           <AppLayout><Settings /></AppLayout>
@@ -103,15 +97,18 @@ function AppRoutes() {
 }
 
 import { WalletProvider } from './contexts/WalletContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <WalletProvider>
-          <AppRoutes />
-        </WalletProvider>
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <WalletProvider>
+            <AppRoutes />
+          </WalletProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

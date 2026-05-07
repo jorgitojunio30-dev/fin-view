@@ -24,6 +24,10 @@ class RevenueBase(BaseModel):
     accountId: str
     date: datetime
     month: str # YYYY-MM
+    isFixed: Optional[bool] = False
+    recurringId: Optional[str] = None
+    recurringMonths: Optional[int] = None
+    status: Optional[str] = 'realizado'  # pendente | realizado
 
 class RevenueCreate(RevenueBase):
     pass
@@ -35,6 +39,10 @@ class RevenueUpdate(BaseModel):
     accountId: Optional[str] = None
     date: Optional[datetime] = None
     month: Optional[str] = None
+    isFixed: Optional[bool] = None
+    recurringId: Optional[str] = None
+    recurringMonths: Optional[int] = None
+    status: Optional[str] = None
 
 class RevenueResponse(RevenueBase):
     id: str
@@ -49,6 +57,9 @@ class ExpenseBase(BaseModel):
     month: str # YYYY-MM
     isRecurring: Optional[bool] = False
     recurringId: Optional[str] = None
+    recurringMonths: Optional[int] = None
+    recurringIndex: Optional[int] = None
+    status: Optional[str] = 'realizado'  # pendente | realizado
 
 class ExpenseCreate(ExpenseBase):
     pass
@@ -63,6 +74,9 @@ class ExpenseUpdate(BaseModel):
     month: Optional[str] = None
     isRecurring: Optional[bool] = None
     recurringId: Optional[str] = None
+    recurringMonths: Optional[int] = None
+    recurringIndex: Optional[int] = None
+    status: Optional[str] = None
 
 class ExpenseResponse(ExpenseBase):
     id: str

@@ -1,0 +1,53 @@
+@media (max-width: 768px) {
+  /* Garantir que o conteúdo não sobreponha o bottom nav */
+  .cards-page {
+    padding-bottom: calc(var(--bottomnav-altura) + var(--espacamento-lg)) !important;
+  }
+
+  /* Título e botões */
+  .cards-page .pagina-titulo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--espacamento-sm);
+  }
+
+  .cards-page .pagina-titulo > div:last-child {
+    width: 100%;
+    display: flex;
+  }
+
+  .cards-page .pagina-titulo > div:last-child .btn {
+    flex: 1;
+    font-size: var(--fonte-tamanho-xs);
+    padding: 8px 12px;
+  }
+
+  /* Seletor de cartões horizontal */
+  .cards-selector {
+    gap: var(--espacamento-sm) !important;
+    padding-bottom: var(--espacamento-sm) !important;
+    margin-bottom: var(--espacamento-md) !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .cards-selector > div {
+    min-width: 160px !important;
+    padding: var(--espacamento-sm) !important;
+  }
+
+  .cards-selector > div h3 {
+    font-size: var(--fonte-tamanho-sm) !important;
+  }
+
+  /* Barra de mês/status */
+  .cards-month-bar {
+    flex-direction: column !important;
+    gap: var(--espacamento-sm) !important;
+    padding: var(--espacamento-sm) !important;
+  }
+
+  .cards-month-bar > div {
+    width: 100%;
+    justify-content: space-between !important;
+  }
+}

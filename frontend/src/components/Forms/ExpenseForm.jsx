@@ -5,7 +5,7 @@ import { categoryService } from '../../services/categories';
 import Input from '../UI/Input';
 import Select from '../UI/Select';
 import Button from '../UI/Button';
-import { FileText, DollarSign, Tag, Landmark, Calendar, Repeat } from 'lucide-react';
+import { FileText, DollarSign, Tag, Landmark, Calendar, Repeat, Hash } from 'lucide-react';
 
 export default function ExpenseForm({ initialData, accounts, onSubmit, onCancel, isLoading }) {
   const { carteiraSelecionada } = useWallet();
@@ -21,7 +21,8 @@ export default function ExpenseForm({ initialData, accounts, onSubmit, onCancel,
     category: '',
     accountId: initialData?.accountId || carteiraSelecionada || (accounts.length > 0 ? accounts[0].id : ''),
     type: 'variavel',
-    date: dataHoje
+    date: dataHoje,
+    recurringMonths: 12
   });
 
   useEffect(() => {
@@ -74,7 +75,8 @@ export default function ExpenseForm({ initialData, accounts, onSubmit, onCancel,
       ...formData,
       amount: parseFloat(formData.amount),
       month: formData.date.substring(0, 7),
-      isRecurring: formData.type === 'fixa'
+      isRecurring: formData.type === 'fixa',
+      recurringMonths: formData.type === 'fixa' ? (parseInt(formData.recurringMonths) || 12) : null
     };
     
     onSubmit(dataToSubmit);
@@ -159,6 +161,61 @@ export default function ExpenseForm({ initialData, accounts, onSubmit, onCancel,
         />
       </div>
 
+      {formData.type === 'fixa' && !initialData && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--espacamento-md)',
+          padding: 'var(--espacamento-sm) var(--espacamento-md)',
+          background: 'var(--cor-primaria-transparente)',
+          borderRadius: 'var(--raio-borda-md)',
+          border: '1px solid var(--cor-primaria)'
+        }}>
+          <Hash size={16} color="var(--cor-primaria)" style={{ flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <label htmlFor="expense-recurring-months" style={{ fontSize: 'var(--fonte-tamanho-sm)', fontWeight: 600, color: 'var(--cor-primaria)', display: 'block', marginBottom: '4px' }}>
+              Repetir por quantos meses?
+            </label>
+            <input
+              id="expense-recurring-months"
+              name="recurringMonths"
+              type="number"
+              min="1"
+              max="120"
+              value={formData.recurringMonths}
+              onChange={handleChange}
+              style={{
+                width: '80px',
+                padding: '4px 8px',
+                borderRadius: 'var(--raio-borda-sm)',
+                border: '1px solid var(--cor-primaria)',
+                background: 'var(--cor-fundo-input)',
+                color: 'var(--cor-texto)',
+                fontSize: 'var(--fonte-tamanho-sm)',
+                fontWeight: 600
+              }}
+            />
+          </div>
+          <span style={{ fontSize: 'var(--fonte-tamanho-xs)', color: 'var(--cor-texto-secundario)', textAlign: 'right' }}>
+            Será criada em {formData.recurringMonths || 12} mês{(formData.recurringMonths || 12) > 1 ? 'es' : ''}
+          </span>
+        </div>
+      )}
+
+      {formData.type === 'fixa' && initialData && (
+        <div style={{
+          padding: 'var(--espacamento-sm) var(--espacamento-md)',
+          background: 'var(--cor-primaria-transparente)',
+          borderRadius: 'var(--raio-borda-md)',
+          border: '1px solid var(--cor-primaria)',
+          fontSize: 'var(--fonte-tamanho-sm)',
+          color: 'var(--cor-primaria)'
+        }}>
+          <Hash size={14} style={{ marginRight: '6px', verticalAlign: 'middle' }} />
+          Despesa fixa — ao salvar, você poderá aplicar as alterações a esta ocorrência ou a todas as futuras.
+        </div>
+      )}
+
       <Select
         label="Carteira de Origem"
         nome="accountId"
@@ -168,8 +225,6 @@ export default function ExpenseForm({ initialData, accounts, onSubmit, onCancel,
         opcoes={opcoesContas}
         icone={Landmark}
         obrigatorio
-        disabled={true}
-        title="A carteira deve ser alterada no seletor global no topo da página"
       />
 
       <Input

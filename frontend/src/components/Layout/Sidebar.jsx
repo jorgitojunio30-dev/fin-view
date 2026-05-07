@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import {
   LayoutDashboard, TrendingUp, TrendingDown, CreditCard,
-  Landmark, BarChart3, Calculator, Settings, LogOut, Wallet, Tag
+  Landmark, BarChart3, Settings, LogOut, Wallet, Tag
 } from 'lucide-react';
 import './Sidebar.css';
 
@@ -14,7 +14,6 @@ const itensMenu = [
   { caminho: '/carteiras', icone: Landmark, rotulo: 'Carteiras' },
   { caminho: '/categorias', icone: Tag, rotulo: 'Categorias' },
   { caminho: '/relatorios', icone: BarChart3, rotulo: 'Relatórios' },
-  { caminho: '/projecao', icone: Calculator, rotulo: 'Projeção' },
   { caminho: '/configuracoes', icone: Settings, rotulo: 'Configurações' },
 ];
 

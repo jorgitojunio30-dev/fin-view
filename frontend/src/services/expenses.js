@@ -30,5 +30,17 @@ export const expenseService = {
     return apiRequest(`/api/expenses/${expenseId}?scope=${scope}`, {
       method: 'DELETE',
     }, token);
+  },
+
+  toggleStatus: async (token, expenseId) => {
+    return apiRequest(`/api/expenses/${expenseId}/toggle-status`, {
+      method: 'PATCH',
+    }, token);
+  },
+
+  renewSeries: async (token, expenseId, months = 12) => {
+    return apiRequest(`/api/expenses/${expenseId}/renew?months=${months}`, {
+      method: 'POST',
+    }, token);
   }
 };

@@ -13,6 +13,7 @@ import {
   CreditCard, Plus, Edit2, Trash2, Calendar, ShoppingCart, 
   ChevronLeft, ChevronRight, CheckCircle2, Lock, Unlock 
 } from 'lucide-react';
+import './Cards.css';
 
 export default function Cards() {
   const { usuario } = useAuth();
@@ -214,7 +215,7 @@ export default function Cards() {
   const statusInfo = getStatusBadge(fatura?.status || 'aberta');
 
   return (
-    <div className="pagina-conteudo">
+    <div className="pagina-conteudo cards-page">
       <div className="pagina-titulo">
         <div>
           <h1>Cartões de Crédito</h1>
@@ -235,7 +236,7 @@ export default function Cards() {
       </div>
 
       {/* Seletor de Cartões */}
-      <div style={{ display: 'flex', gap: 'var(--espacamento-md)', overflowX: 'auto', paddingBottom: 'var(--espacamento-md)', marginBottom: 'var(--espacamento-lg)' }}>
+      <div className="cards-selector" style={{ display: 'flex', gap: 'var(--espacamento-md)', overflowX: 'auto', paddingBottom: 'var(--espacamento-md)', marginBottom: 'var(--espacamento-lg)' }}>
         {cartoes.map(cartao => (
           <div 
             key={cartao.id}
@@ -266,7 +267,7 @@ export default function Cards() {
 
       {cartaoSelecionado ? (
         <>
-          <div style={{ 
+          <div className="cards-month-bar" style={{ 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',

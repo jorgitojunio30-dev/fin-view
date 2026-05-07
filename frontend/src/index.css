@@ -2,51 +2,90 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 /* === CSS Variables === */
-:root {
-  /* Colors - Dark Theme */
+
+/* Light Theme (default) */
+:root, [data-theme="light"] {
+  --cor-fundo: #f8fafc;
+  --cor-fundo-card: #ffffff;
+  --cor-fundo-card-hover: #f1f5f9;
+  --cor-fundo-sidebar: #ffffff;
+  --cor-fundo-input: #f1f5f9;
+  --cor-fundo-modal: rgba(0, 0, 0, 0.4);
+  --cor-fundo-header: rgba(248, 250, 252, 0.85);
+
+  --cor-primaria: #6366f1;
+  --cor-primaria-hover: #4f46e5;
+  --cor-primaria-transparente: rgba(99, 102, 241, 0.1);
+  --cor-secundaria: #10b981;
+  --cor-secundaria-hover: #059669;
+
+  --cor-texto: #1e293b;
+  --cor-texto-secundario: #64748b;
+  --cor-texto-terciario: #94a3b8;
+
+  --cor-borda: #e2e8f0;
+  --cor-borda-hover: #cbd5e1;
+  --cor-borda-foco: #6366f1;
+
+  --cor-sucesso: #10b981;
+  --cor-alerta: #f59e0b;
+  --cor-erro: #ef4444;
+  --cor-info: #3b82f6;
+
+  --gradiente-primario: linear-gradient(135deg, #6366f1, #8b5cf6);
+  --gradiente-sucesso: linear-gradient(135deg, #10b981, #059669);
+  --gradiente-erro: linear-gradient(135deg, #ef4444, #dc2626);
+  --gradiente-alerta: linear-gradient(135deg, #f59e0b, #d97706);
+  --gradiente-card: linear-gradient(145deg, #ffffff, #f8fafc);
+
+  --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --sombra-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --sombra-lg: 0 8px 30px rgba(0, 0, 0, 0.12);
+  --sombra-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
   --cor-fundo: #0a0e17;
   --cor-fundo-card: #111827;
   --cor-fundo-card-hover: #1a2234;
   --cor-fundo-sidebar: #0d1220;
   --cor-fundo-input: #1a2234;
   --cor-fundo-modal: rgba(0, 0, 0, 0.7);
+  --cor-fundo-header: rgba(10, 14, 23, 0.85);
 
-  /* Accent */
   --cor-primaria: #6366f1;
   --cor-primaria-hover: #818cf8;
   --cor-primaria-transparente: rgba(99, 102, 241, 0.15);
   --cor-secundaria: #10b981;
   --cor-secundaria-hover: #34d399;
 
-  /* Text */
   --cor-texto: #f1f5f9;
   --cor-texto-secundario: #94a3b8;
   --cor-texto-terciario: #64748b;
 
-  /* Borders */
   --cor-borda: #1e293b;
   --cor-borda-hover: #334155;
   --cor-borda-foco: #6366f1;
 
-  /* Status */
   --cor-sucesso: #10b981;
   --cor-alerta: #f59e0b;
   --cor-erro: #ef4444;
   --cor-info: #3b82f6;
 
-  /* Gradients */
   --gradiente-primario: linear-gradient(135deg, #6366f1, #8b5cf6);
   --gradiente-sucesso: linear-gradient(135deg, #10b981, #059669);
   --gradiente-erro: linear-gradient(135deg, #ef4444, #dc2626);
   --gradiente-alerta: linear-gradient(135deg, #f59e0b, #d97706);
   --gradiente-card: linear-gradient(145deg, #111827, #1a2234);
 
-  /* Shadows */
   --sombra-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --sombra-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --sombra-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
   --sombra-glow: 0 0 20px rgba(99, 102, 241, 0.3);
+}
 
+:root {
   /* Spacing */
   --espacamento-xs: 0.25rem;
   --espacamento-sm: 0.5rem;
@@ -377,8 +416,8 @@ img {
 .spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 2px solid rgba(99, 102, 241, 0.2);
+  border-top-color: var(--cor-primaria);
   border-radius: 50%;
   animation: spin 0.6s linear infinite;
   display: inline-block;

@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useWallet } from '../../contexts/WalletContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { alertService } from '../../services/alerts';
-import { Bell, User, Landmark, X, ChevronRight, AlertCircle, AlertTriangle, Info } from 'lucide-react';
+import { Bell, User, Landmark, X, ChevronRight, AlertCircle, AlertTriangle, Info, Sun, Moon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import './Header.css';
 
 export default function Header() {
   const { usuario } = useAuth();
   const { carteiras, carteiraSelecionada, setCarteiraSelecionada } = useWallet();
+  const { tema, alternarTema } = useTheme();
   const [alertas, setAlertas] = useState([]);
   const [painelAberto, setPainelAberto] = useState(false);
 
@@ -64,6 +66,14 @@ export default function Header() {
       </div>
 
       <div className="header-direita">
+        <button 
+          className="header-icone-btn" 
+          title={tema === 'light' ? 'Modo escuro' : 'Modo claro'}
+          onClick={alternarTema}
+        >
+          {tema === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+        </button>
+
         <div style={{ position: 'relative' }}>
           <button 
             className="header-icone-btn" 

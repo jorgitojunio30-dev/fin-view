@@ -6,7 +6,7 @@ import Card, { CardIcone } from '../components/UI/Card';
 import Button from '../components/UI/Button';
 import Modal from '../components/UI/Modal';
 import ExpenseForm from '../components/Forms/ExpenseForm';
-import { ArrowUpCircle, Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowUpCircle, Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
 
 export default function Expenses() {
   const { usuario } = useAuth();
@@ -150,6 +150,45 @@ export default function Expenses() {
 
   const totalDespesas = despesas.reduce((acc, d) => acc + (parseFloat(d.amount) || 0), 0);
 
+  async function handleToggleStatus(despesa) {
+    try {
+      const token = await usuario.getIdToken();
+      const { status } = await expenseService.toggleStatus(token, despesa.id);
+      setDespesas(prev => prev.map(d => d.id === despesa.id ? { ...d, status } : d));
+    } catch (erro) {
+      console.error("Erro ao atualizar status:", erro);
+    }
+  }
+
+  async function handleRenovarSerie(despesa) {
+    const meses = window.prompt("Renovar por quantos meses?", "12");
+    if (!meses) return;
+    const num = parseInt(meses);
+    if (isNaN(num) || num < 1) {
+      alert("Informe um número válido.");
+      return;
+    }
+    try {
+      const token = await usuario.getIdToken();
+      await expenseService.renewSeries(token, despesa.id, num);
+      alert(`Série renovada com mais ${num} meses!`);
+      await carregarDados();
+    } catch (erro) {
+      console.error("Erro ao renovar série:", erro);
+      alert("Erro ao renovar a série. Tente novamente.");
+    }
+  }
+
+  // Detecta despesas fixas que estão no último mês da série
+  function isUltimaOcorrencia(despesa) {
+    if (!despesa.recurringId || despesa.type !== 'fixa') return false;
+    // Se temos os campos de série, usamos eles diretamente
+    if (despesa.recurringIndex && despesa.recurringMonths) {
+      return despesa.recurringIndex === despesa.recurringMonths;
+    }
+    return false;
+  }
+
   return (
     <div className="pagina-conteudo">
       <div className="pagina-titulo">
@@ -212,14 +251,34 @@ export default function Expenses() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espacamento-sm)' }}>
           {despesas.map((despesa) => (
-            <Card key={despesa.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--espacamento-md)' }}>
+            <Card key={despesa.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--espacamento-md)', opacity: despesa.status === 'pendente' ? 0.75 : 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--espacamento-md)' }}>
-                <CardIcone icone={ArrowUpCircle} cor="erro" />
+                <button
+                  onClick={() => handleToggleStatus(despesa)}
+                  title={despesa.status === 'realizado' ? 'Marcar como pendente' : 'Marcar como pago'}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
+                >
+                  {despesa.status === 'realizado'
+                    ? <CheckCircle2 size={22} color="var(--cor-sucesso)" />
+                    : <Clock size={22} color="var(--cor-alerta)" />
+                  }
+                </button>
                 <div>
-                  <h3 style={{ fontSize: 'var(--fonte-tamanho-base)', fontWeight: 600 }}>{despesa.description}</h3>
+                  <h3 style={{ fontSize: 'var(--fonte-tamanho-base)', fontWeight: 600, textDecoration: despesa.status === 'pendente' ? 'none' : 'none' }}>{despesa.description}</h3>
                   <p style={{ fontSize: 'var(--fonte-tamanho-sm)', color: 'var(--cor-texto-secundario)' }}>
                     {formatarData(despesa.date)} • {despesa.category} • {getNomeConta(despesa.accountId)}
-                    {despesa.type === 'fixa' && <span style={{ marginLeft: '8px', padding: '2px 6px', background: 'var(--cor-primaria-transparente)', color: 'var(--cor-primaria)', borderRadius: '4px', fontSize: '10px', fontWeight: 700 }}>FIXA</span>}
+                    {despesa.type === 'fixa' && (
+                      <span style={{ marginLeft: '8px', padding: '2px 6px', background: 'var(--cor-primaria-transparente)', color: 'var(--cor-primaria)', borderRadius: '4px', fontSize: '10px', fontWeight: 700 }}>
+                        {despesa.recurringIndex && despesa.recurringMonths
+                          ? `${despesa.recurringIndex}/${despesa.recurringMonths}`
+                          : 'FIXA'}
+                      </span>
+                    )}
+                    {isUltimaOcorrencia(despesa) && (
+                      <span title="Última ocorrência desta despesa fixa." style={{ marginLeft: '6px', padding: '2px 6px', background: 'rgba(245,158,11,0.15)', color: 'var(--cor-alerta)', borderRadius: '4px', fontSize: '10px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <AlertTriangle size={10} /> ÚLTIMO MÊS
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -228,6 +287,15 @@ export default function Expenses() {
                   -{formatarMoeda(despesa.amount)}
                 </span>
                 <div style={{ display: 'flex', gap: 'var(--espacamento-xs)' }}>
+                  {isUltimaOcorrencia(despesa) && (
+                    <button
+                      onClick={() => handleRenovarSerie(despesa)}
+                      style={{ background: 'none', border: 'none', color: 'var(--cor-primaria)', cursor: 'pointer', padding: '4px' }}
+                      title="Renovar série"
+                    >
+                      <RefreshCw size={16} />
+                    </button>
+                  )}
                   <button 
                     onClick={() => abrirModal(despesa)}
                     style={{ background: 'none', border: 'none', color: 'var(--cor-texto-secundario)', cursor: 'pointer', padding: '4px' }}

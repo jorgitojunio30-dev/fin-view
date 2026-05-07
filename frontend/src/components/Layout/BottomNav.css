@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   height: var(--bottomnav-altura);
-  background: rgba(10, 14, 23, 0.95);
+  background: var(--cor-fundo-header);
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--cor-borda);
   z-index: 100;

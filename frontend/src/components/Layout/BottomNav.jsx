@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import {
-  LayoutDashboard, TrendingUp, TrendingDown, CreditCard, BarChart3
+  LayoutDashboard, TrendingUp, TrendingDown, CreditCard, Landmark
 } from 'lucide-react';
 import './BottomNav.css';
 
@@ -9,7 +9,7 @@ const itens = [
   { caminho: '/receitas', icone: TrendingUp, rotulo: 'Receitas' },
   { caminho: '/despesas', icone: TrendingDown, rotulo: 'Despesas' },
   { caminho: '/cartoes', icone: CreditCard, rotulo: 'Cartões' },
-  { caminho: '/relatorios', icone: BarChart3, rotulo: 'Relatórios' },
+  { caminho: '/carteiras', icone: Landmark, rotulo: 'Carteiras' },
 ];
 
 export default function BottomNav() {

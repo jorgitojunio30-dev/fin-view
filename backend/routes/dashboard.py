@@ -36,10 +36,9 @@ def get_dashboard_summary(request: Request, month: str = None, account_id: str =
     purchases = query_documents(user_id, "cardPurchases", [('month', '==', month)])
     total_card_purchases = sum(p.get('amount', 0) for p in purchases)
     
-    # 4. Fetch Open Invoices
-    # Only if no account_id or if we want to show global credit status
-    invoices = query_documents(user_id, "invoices", [('status', '==', 'aberta')])
-    total_open_invoices = sum(i.get('totalAmount', 0) for i in invoices)
+    # 4. Fetch all invoices for the month (any status = compromisso do mês)
+    all_invoices = query_documents(user_id, "invoices", [('month', '==', month)])
+    total_open_invoices = sum(i.get('totalAmount', 0) for i in all_invoices)
 
     # 5. Group by category for chart
     expenses_by_category = {}
@@ -53,7 +52,7 @@ def get_dashboard_summary(request: Request, month: str = None, account_id: str =
         "month": month,
         "totalRevenues": total_revenues,
         "totalExpenses": total_expenses,
-        "balance": total_revenues - total_expenses,
+        "balance": total_revenues - total_expenses - total_open_invoices,
         "totalCardPurchases": total_card_purchases,
         "totalOpenInvoices": total_open_invoices,
         "categorySummary": category_summary

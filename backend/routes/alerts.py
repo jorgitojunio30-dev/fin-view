@@ -30,24 +30,38 @@ def get_active_alerts(request: Request):
                 "link": "/cartoes"
             })
             
-        # Check Due Date (1 day before)
-        due_date_this_month = today.replace(day=min(card.get('dueDay', 1), 28))
-        if (due_date_this_month.date() - today.date()).days == 1:
-            # Get invoice amount
+        # Check Due Date (today and 1 day before) — only if not paid
+        due_day = card.get('dueDay', 1)
+        due_date_this_month = today.replace(day=min(due_day, 28))
+        days_until_due = (due_date_this_month.date() - today.date()).days
+
+        if days_until_due in (0, 1):
+            # Get invoice — only alert if not paid
             invoices = query_documents(user_id, "invoices", [
                 ('cardId', '==', card['id']),
-                ('month', '==', month_str),
-                ('status', '==', 'fechada')
+                ('month', '==', month_str)
             ])
-            if invoices:
-                amount = invoices[0].get('totalAmount', 0)
-                alerts.append({
-                    "id": f"due-{card['id']}",
-                    "type": "vencimento",
-                    "severity": "warning",
-                    "message": f"Fatura do {card['name']} vence amanhã — R$ {amount:,.2f}",
-                    "link": "/cartoes"
-                })
+            unpaid_invoices = [i for i in invoices if i.get('status') != 'paga']
+            if unpaid_invoices:
+                amount = unpaid_invoices[0].get('totalAmount', 0)
+                if days_until_due == 0:
+                    # Vence hoje — danger, topo
+                    alerts.insert(0, {
+                        "id": f"due-{card['id']}",
+                        "type": "vencimento",
+                        "severity": "danger",
+                        "message": f"Fatura do {card['name']} vence hoje — R$ {amount:,.2f}",
+                        "link": "/cartoes"
+                    })
+                else:
+                    # Vence amanhã — warning
+                    alerts.append({
+                        "id": f"due-{card['id']}",
+                        "type": "vencimento",
+                        "severity": "warning",
+                        "message": f"Fatura do {card['name']} vence amanhã — R$ {amount:,.2f}",
+                        "link": "/cartoes"
+                    })
 
         # Check Limit (80%)
         purchases = query_documents(user_id, "cardPurchases", [
@@ -88,6 +102,37 @@ def get_active_alerts(request: Request):
                 "severity": "warning",
                 "message": "Você já comprometeu 90% da sua receita do mês.",
                 "link": "/"
+            })
+
+    # 3. Despesas pendentes que vencem nas próximas 24h
+    tomorrow = today + timedelta(days=1)
+    pending_expenses = [e for e in exps if e.get('status', 'realizado') == 'pendente']
+    for exp in pending_expenses:
+        exp_date_str = exp.get('date', '')
+        if not exp_date_str:
+            continue
+        try:
+            exp_date = datetime.fromisoformat(exp_date_str.replace('Z', '+00:00')).replace(tzinfo=None)
+        except (ValueError, TypeError):
+            continue
+        # Se a data da despesa é entre agora e amanhã (próximas 24h)
+        if exp_date.date() == today.date():
+            # Vence hoje — danger, vai pro topo
+            alerts.insert(0, {
+                "id": f"expense-due-{exp['id']}",
+                "type": "despesa_vencendo",
+                "severity": "danger",
+                "message": f"Despesa \"{exp['description']}\" de R$ {exp['amount']:,.2f} vence hoje!",
+                "link": "/despesas"
+            })
+        elif exp_date.date() == tomorrow.date():
+            # Vence amanhã — warning
+            alerts.append({
+                "id": f"expense-due-{exp['id']}",
+                "type": "despesa_vencendo",
+                "severity": "warning",
+                "message": f"Despesa \"{exp['description']}\" de R$ {exp['amount']:,.2f} vence amanhã.",
+                "link": "/despesas"
             })
 
     return alerts

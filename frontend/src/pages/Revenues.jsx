@@ -6,7 +6,7 @@ import Card, { CardIcone } from '../components/UI/Card';
 import Button from '../components/UI/Button';
 import Modal from '../components/UI/Modal';
 import RevenueForm from '../components/Forms/RevenueForm';
-import { ArrowDownCircle, Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowDownCircle, Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight, Repeat, CheckCircle2, Clock } from 'lucide-react';
 
 export default function Revenues() {
   const { usuario } = useAuth();
@@ -93,13 +93,20 @@ export default function Revenues() {
     try {
       setSalvando(true);
       const token = await usuario.getIdToken();
-      
+
       if (receitaEditando) {
-        await revenueService.updateRevenue(token, receitaEditando.id, dados);
+        let scope = 'single';
+        if (receitaEditando.recurringId) {
+          const aplicarFuturas = window.confirm(
+            "Esta é uma receita fixa. Deseja aplicar as alterações a todas as ocorrências futuras?"
+          );
+          if (aplicarFuturas) scope = 'future';
+        }
+        await revenueService.updateRevenue(token, receitaEditando.id, dados, scope);
       } else {
         await revenueService.createRevenue(token, dados);
       }
-      
+
       await carregarDados();
       fecharModal();
     } catch (erro) {
@@ -110,13 +117,31 @@ export default function Revenues() {
     }
   }
 
-  async function handleExcluir(id) {
-    if (!window.confirm("Tem certeza que deseja excluir esta receita?")) return;
-    
+  async function handleExcluir(receita) {
+    let scope = 'single';
+
+    if (receita.recurringId) {
+      const confirmacao = window.confirm(
+        "Esta é uma receita fixa.\n\nClique em OK para excluir TODAS as ocorrências futuras.\nClique em Cancelar para excluir APENAS esta ocorrência (ou cancelar a operação)."
+      );
+
+      if (confirmacao) {
+        scope = 'future';
+      } else {
+        if (window.confirm("Deseja excluir APENAS esta ocorrência?")) {
+          scope = 'single';
+        } else {
+          return;
+        }
+      }
+    } else {
+      if (!window.confirm("Tem certeza que deseja excluir esta receita?")) return;
+    }
+
     try {
       setCarregando(true);
       const token = await usuario.getIdToken();
-      await revenueService.deleteRevenue(token, id);
+      await revenueService.deleteRevenue(token, receita.id, scope);
       await carregarDados();
     } catch (erro) {
       console.error("Erro ao excluir receita:", erro);
@@ -126,6 +151,16 @@ export default function Revenues() {
   }
 
   const totalReceitas = receitas.reduce((acc, r) => acc + (parseFloat(r.amount) || 0), 0);
+
+  async function handleToggleStatus(receita) {
+    try {
+      const token = await usuario.getIdToken();
+      const { status } = await revenueService.toggleStatus(token, receita.id);
+      setReceitas(prev => prev.map(r => r.id === receita.id ? { ...r, status } : r));
+    } catch (erro) {
+      console.error("Erro ao atualizar status:", erro);
+    }
+  }
 
   return (
     <div className="pagina-conteudo">
@@ -189,13 +224,27 @@ export default function Revenues() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espacamento-sm)' }}>
           {receitas.map((receita) => (
-            <Card key={receita.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--espacamento-md)' }}>
+            <Card key={receita.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 'var(--espacamento-md)', opacity: receita.status === 'pendente' ? 0.75 : 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--espacamento-md)' }}>
-                <CardIcone icone={ArrowDownCircle} cor="sucesso" />
+                <button
+                  onClick={() => handleToggleStatus(receita)}
+                  title={receita.status === 'realizado' ? 'Marcar como pendente' : 'Marcar como recebido'}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', flexShrink: 0 }}
+                >
+                  {receita.status === 'realizado'
+                    ? <CheckCircle2 size={22} color="var(--cor-sucesso)" />
+                    : <Clock size={22} color="var(--cor-alerta)" />
+                  }
+                </button>
                 <div>
                   <h3 style={{ fontSize: 'var(--fonte-tamanho-base)', fontWeight: 600 }}>{receita.description}</h3>
                   <p style={{ fontSize: 'var(--fonte-tamanho-sm)', color: 'var(--cor-texto-secundario)' }}>
                     {formatarData(receita.date)} • {receita.category} • {getNomeConta(receita.accountId)}
+                    {receita.isFixed && (
+                      <span style={{ marginLeft: '8px', padding: '2px 6px', background: 'rgba(16,185,129,0.12)', color: 'var(--cor-sucesso)', borderRadius: '4px', fontSize: '10px', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                        <Repeat size={9} /> FIXA
+                      </span>
+                    )}
                   </p>
                 </div>
               </div>
@@ -212,7 +261,7 @@ export default function Revenues() {
                     <Edit2 size={16} />
                   </button>
                   <button 
-                    onClick={() => handleExcluir(receita.id)}
+                    onClick={() => handleExcluir(receita)}
                     style={{ background: 'none', border: 'none', color: 'var(--cor-erro)', cursor: 'pointer', padding: '4px' }}
                     title="Excluir"
                   >
