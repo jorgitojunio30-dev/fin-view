@@ -1,0 +1,16 @@
+# Credenciais — NUNCA commitar
+firebase-credentials.json
+*.json.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+.env
+.env.*
+
+# Render / deploy
+*.log
