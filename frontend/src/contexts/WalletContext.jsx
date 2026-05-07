@@ -25,9 +25,9 @@ export function WalletProvider({ children }) {
         const dados = await accountService.getAccounts(token);
         setCarteiras(dados);
 
-        // Se a selecionada atual não existe mais nos novos dados, voltamos para TODAS
-        if (carteiraSelecionada && !dados.find(c => c.id === carteiraSelecionada)) {
-          setCarteiraSelecionada('');
+        // Se a selecionada atual não existe nos dados, seleciona a primeira
+        if (!carteiraSelecionada || !dados.find(c => c.id === carteiraSelecionada)) {
+          setCarteiraSelecionada(dados.length > 0 ? dados[0].id : '');
         }
       } catch (erro) {
         console.error("Erro ao carregar carteiras:", erro);

@@ -16,7 +16,7 @@ import { accountService } from '../services/accounts';
 import {
   Wallet, TrendingUp, TrendingDown, CreditCard,
   Calendar, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
-  CheckCircle2, Clock, Edit2, Trash2, ArrowDownCircle, ArrowUpCircle, ArrowRight
+  CheckCircle2, Clock, Edit2, Trash2, ArrowDownCircle, ArrowUpCircle, ArrowRight, Plus
 } from 'lucide-react';
 import './Dashboard.css';
 
@@ -146,8 +146,18 @@ export default function Dashboard() {
     setModalReceitaAberto(true);
   }
 
+  function abrirNovaReceita() {
+    setReceitaEditando(null);
+    setModalReceitaAberto(true);
+  }
+
   function abrirEditarDespesa(despesa) {
     setDespesaEditando(despesa);
+    setModalDespesaAberto(true);
+  }
+
+  function abrirNovaDespesa() {
+    setDespesaEditando(null);
     setModalDespesaAberto(true);
   }
 
@@ -155,13 +165,18 @@ export default function Dashboard() {
     try {
       setSalvando(true);
       const token = await usuario.getIdToken();
-      let scope = 'single';
-      if (receitaEditando?.recurringId) {
-        const futuras = await confirmar("Aplicar alterações a todas as ocorrências futuras?");
-        if (futuras) scope = 'future';
+      if (receitaEditando) {
+        let scope = 'single';
+        if (receitaEditando.recurringId) {
+          const futuras = await confirmar("Aplicar alterações a todas as ocorrências futuras?");
+          if (futuras) scope = 'future';
+        }
+        await revenueService.updateRevenue(token, receitaEditando.id, dados, scope);
+        toast.sucesso("Receita atualizada!");
+      } else {
+        await revenueService.createRevenue(token, dados);
+        toast.sucesso("Receita adicionada!");
       }
-      await revenueService.updateRevenue(token, receitaEditando.id, dados, scope);
-      toast.sucesso("Receita atualizada!");
       await carregarDados();
       setModalReceitaAberto(false);
       setReceitaEditando(null);
@@ -177,13 +192,18 @@ export default function Dashboard() {
     try {
       setSalvando(true);
       const token = await usuario.getIdToken();
-      let scope = 'single';
-      if (despesaEditando?.recurringId) {
-        const futuras = await confirmar("Aplicar alterações a todas as parcelas futuras?");
-        if (futuras) scope = 'future';
+      if (despesaEditando) {
+        let scope = 'single';
+        if (despesaEditando.recurringId) {
+          const futuras = await confirmar("Aplicar alterações a todas as parcelas futuras?");
+          if (futuras) scope = 'future';
+        }
+        await expenseService.updateExpense(token, despesaEditando.id, dados, scope);
+        toast.sucesso("Despesa atualizada!");
+      } else {
+        await expenseService.createExpense(token, dados);
+        toast.sucesso("Despesa adicionada!");
       }
-      await expenseService.updateExpense(token, despesaEditando.id, dados, scope);
-      toast.sucesso("Despesa atualizada!");
       await carregarDados();
       setModalDespesaAberto(false);
       setDespesaEditando(null);
@@ -406,10 +426,20 @@ export default function Dashboard() {
                 const totalDespesas = despesas.reduce((acc, d) => acc + (d.amount || 0), 0);
                 const totalCartoes = cartoes.reduce((acc, c) => acc + (c.totalMes || 0), 0);
                 const saldo = totalReceitas - totalDespesas - totalCartoes;
+                const despesasPendentes = despesas.filter(d => d.status !== 'realizado').reduce((acc, d) => acc + (d.amount || 0), 0);
+                const cartoesPendentes = cartoes.filter(c => c.fatura?.status !== 'paga').reduce((acc, c) => acc + (c.totalMes || 0), 0);
+                const totalAPagar = despesasPendentes + cartoesPendentes;
                 return (
-                  <span className={`resumo-valor ${saldo >= 0 ? 'resumo-sucesso' : 'resumo-erro'}`}>
-                    {formatarMoeda(saldo)}
-                  </span>
+                  <>
+                    <span className={`resumo-valor ${saldo >= 0 ? 'resumo-sucesso' : 'resumo-erro'}`}>
+                      {formatarMoeda(saldo)}
+                    </span>
+                    {totalAPagar > 0 && (
+                      <span style={{ fontSize: '10px', color: 'var(--cor-erro)', fontWeight: 600, marginTop: '2px' }}>
+                        {formatarMoeda(totalAPagar)} a pagar
+                      </span>
+                    )}
+                  </>
                 );
               })()}
             </Card>
@@ -417,15 +447,20 @@ export default function Dashboard() {
 
           {/* Lista de Receitas */}
           <div style={{ marginTop: 'var(--espacamento-lg)' }}>
-            <button onClick={() => setReceitasExpandido(!receitasExpandido)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--espacamento-sm)', marginBottom: receitasExpandido ? 'var(--espacamento-md)' : 0, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-              <ArrowDownCircle size={20} color="var(--cor-sucesso)" />
-              <h3 style={{ fontSize: 'var(--fonte-tamanho-lg)', fontWeight: 600, color: 'var(--cor-texto)' }}>Receitas</h3>
-              <span style={{ fontSize: 'var(--fonte-tamanho-xs)', color: 'var(--cor-texto-terciario)', marginLeft: '4px' }}>({receitas.length})</span>
-              <span style={{ marginLeft: 'auto', fontSize: 'var(--fonte-tamanho-sm)', color: 'var(--cor-sucesso)', fontWeight: 600 }}>
-                {formatarMoeda(receitas.reduce((acc, r) => acc + (r.amount || 0), 0))}
-              </span>
-              {receitasExpandido ? <ChevronUp size={18} color="var(--cor-texto-secundario)" /> : <ChevronDown size={18} color="var(--cor-texto-secundario)" />}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--espacamento-sm)', marginBottom: receitasExpandido ? 'var(--espacamento-md)' : 0 }}>
+              <button onClick={() => setReceitasExpandido(!receitasExpandido)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--espacamento-sm)', flex: 1, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+                <ArrowDownCircle size={20} color="var(--cor-sucesso)" />
+                <h3 style={{ fontSize: 'var(--fonte-tamanho-lg)', fontWeight: 600, color: 'var(--cor-texto)' }}>Receitas</h3>
+                <span style={{ fontSize: 'var(--fonte-tamanho-xs)', color: 'var(--cor-texto-terciario)', marginLeft: '4px' }}>({receitas.length})</span>
+                <span style={{ marginLeft: 'auto', fontSize: 'var(--fonte-tamanho-sm)', color: 'var(--cor-sucesso)', fontWeight: 600 }}>
+                  {formatarMoeda(receitas.reduce((acc, r) => acc + (r.amount || 0), 0))}
+                </span>
+                {receitasExpandido ? <ChevronUp size={18} color="var(--cor-texto-secundario)" /> : <ChevronDown size={18} color="var(--cor-texto-secundario)" />}
+              </button>
+              <button onClick={abrirNovaReceita} style={{ background: 'var(--cor-sucesso)', border: 'none', borderRadius: 'var(--raio-sm)', padding: '4px', cursor: 'pointer', display: 'flex', color: 'white' }} title="Adicionar receita">
+                <Plus size={16} />
+              </button>
+            </div>
 
             {receitasExpandido && (receitas.length === 0 ? (
               <p style={{ color: 'var(--cor-texto-terciario)', fontSize: 'var(--fonte-tamanho-sm)', paddingLeft: '28px' }}>Nenhuma receita neste mês.</p>
@@ -459,15 +494,20 @@ export default function Dashboard() {
 
           {/* Lista de Despesas */}
           <div style={{ marginTop: 'var(--espacamento-xl)' }}>
-            <button onClick={() => setDespesasExpandido(!despesasExpandido)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--espacamento-sm)', marginBottom: despesasExpandido ? 'var(--espacamento-md)' : 0, width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
-              <ArrowUpCircle size={20} color="var(--cor-erro)" />
-              <h3 style={{ fontSize: 'var(--fonte-tamanho-lg)', fontWeight: 600, color: 'var(--cor-texto)' }}>Despesas</h3>
-              <span style={{ fontSize: 'var(--fonte-tamanho-xs)', color: 'var(--cor-texto-terciario)', marginLeft: '4px' }}>({despesas.length})</span>
-              <span style={{ marginLeft: 'auto', fontSize: 'var(--fonte-tamanho-sm)', color: 'var(--cor-erro)', fontWeight: 600 }}>
-                {formatarMoeda(despesas.reduce((acc, d) => acc + (d.amount || 0), 0))}
-              </span>
-              {despesasExpandido ? <ChevronUp size={18} color="var(--cor-texto-secundario)" /> : <ChevronDown size={18} color="var(--cor-texto-secundario)" />}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--espacamento-sm)', marginBottom: despesasExpandido ? 'var(--espacamento-md)' : 0 }}>
+              <button onClick={() => setDespesasExpandido(!despesasExpandido)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--espacamento-sm)', flex: 1, background: 'none', border: 'none', cursor: 'pointer', padding: 0, textAlign: 'left' }}>
+                <ArrowUpCircle size={20} color="var(--cor-erro)" />
+                <h3 style={{ fontSize: 'var(--fonte-tamanho-lg)', fontWeight: 600, color: 'var(--cor-texto)' }}>Despesas</h3>
+                <span style={{ fontSize: 'var(--fonte-tamanho-xs)', color: 'var(--cor-texto-terciario)', marginLeft: '4px' }}>({despesas.length})</span>
+                <span style={{ marginLeft: 'auto', fontSize: 'var(--fonte-tamanho-sm)', color: 'var(--cor-erro)', fontWeight: 600 }}>
+                  {formatarMoeda(despesas.reduce((acc, d) => acc + (d.amount || 0), 0))}
+                </span>
+                {despesasExpandido ? <ChevronUp size={18} color="var(--cor-texto-secundario)" /> : <ChevronDown size={18} color="var(--cor-texto-secundario)" />}
+              </button>
+              <button onClick={abrirNovaDespesa} style={{ background: 'var(--cor-erro)', border: 'none', borderRadius: 'var(--raio-sm)', padding: '4px', cursor: 'pointer', display: 'flex', color: 'white' }} title="Adicionar despesa">
+                <Plus size={16} />
+              </button>
+            </div>
 
             {despesasExpandido && (despesas.length === 0 ? (
               <p style={{ color: 'var(--cor-texto-terciario)', fontSize: 'var(--fonte-tamanho-sm)', paddingLeft: '28px' }}>Nenhuma despesa neste mês.</p>
@@ -535,6 +575,7 @@ export default function Dashboard() {
                           {cartao.qtdCompras > 0 && (
                             <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--cor-texto-terciario)' }}>({cartao.qtdCompras} {cartao.qtdCompras === 1 ? 'compra' : 'compras'})</span>
                           )}
+                          <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--cor-texto-terciario)' }}>• venc. {cartao.dueDay}/{mesAtual.split('-')[1]}</span>
                           {textoUrg && (
                             <span style={{ marginLeft: '8px', fontSize: '10px', fontWeight: 700, color: textoUrg.cor }}>{textoUrg.texto}</span>
                           )}
@@ -578,12 +619,12 @@ export default function Dashboard() {
         </>
       )}
 
-      {/* Modais de edição */}
-      <Modal aberto={modalReceitaAberto} aoFechar={() => { setModalReceitaAberto(false); setReceitaEditando(null); }} titulo="Editar Receita">
+      {/* Modais */}
+      <Modal aberto={modalReceitaAberto} aoFechar={() => { setModalReceitaAberto(false); setReceitaEditando(null); }} titulo={receitaEditando ? "Editar Receita" : "Nova Receita"}>
         <RevenueForm initialData={receitaEditando} accounts={contas} onSubmit={handleSalvarReceita} onCancel={() => { setModalReceitaAberto(false); setReceitaEditando(null); }} isLoading={salvando} />
       </Modal>
 
-      <Modal aberto={modalDespesaAberto} aoFechar={() => { setModalDespesaAberto(false); setDespesaEditando(null); }} titulo="Editar Despesa">
+      <Modal aberto={modalDespesaAberto} aoFechar={() => { setModalDespesaAberto(false); setDespesaEditando(null); }} titulo={despesaEditando ? "Editar Despesa" : "Nova Despesa"}>
         <ExpenseForm initialData={despesaEditando} accounts={contas} onSubmit={handleSalvarDespesa} onCancel={() => { setModalDespesaAberto(false); setDespesaEditando(null); }} isLoading={salvando} />
       </Modal>
     </div>
