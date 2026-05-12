@@ -245,12 +245,11 @@ export default function Cards() {
           <p>Gerencie seus cartões e acompanhe suas faturas</p>
         </div>
         <div style={{ display: 'flex', gap: 'var(--espacamento-sm)' }}>
-          <Button variante="secundario" onClick={() => setModalCartaoAberto(true)} icone={Plus}>
+          <Button variante="secundario" onClick={() => setModalCartaoAberto(true)}>
             Novo Cartão
           </Button>
           <Button 
             onClick={() => setModalCompraAberto(true)} 
-            icone={ShoppingCart} 
             disabled={!cartaoSelecionado || (fatura && fatura.status !== 'aberta')}
           >
             Lançar Compra

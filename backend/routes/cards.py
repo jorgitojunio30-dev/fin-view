@@ -1,6 +1,6 @@
 import uuid
 import calendar
-from datetime import datetime, date
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Request
 from middleware.auth import verificar_token
 from services.firestore import (

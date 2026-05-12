@@ -1,5 +1,4 @@
 from config.firebase import db
-from datetime import datetime
 from google.cloud.firestore import SERVER_TIMESTAMP
 from google.cloud.firestore_v1.base_query import FieldFilter
 

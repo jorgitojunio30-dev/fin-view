@@ -13,10 +13,6 @@ class AccountUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
 
-class AccountResponse(AccountBase):
-    id: str
-    createdAt: datetime
-
 class RevenueBase(BaseModel):
     description: str
     amount: float
@@ -43,9 +39,6 @@ class RevenueUpdate(BaseModel):
     recurringId: Optional[str] = None
     recurringMonths: Optional[int] = None
     status: Optional[str] = None
-
-class RevenueResponse(RevenueBase):
-    id: str
 
 class ExpenseBase(BaseModel):
     description: str
@@ -78,9 +71,6 @@ class ExpenseUpdate(BaseModel):
     recurringIndex: Optional[int] = None
     status: Optional[str] = None
 
-class ExpenseResponse(ExpenseBase):
-    id: str
-
 class CategoryBase(BaseModel):
     name: str
     type: str  # receita | despesa
@@ -93,9 +83,6 @@ class CategoryUpdate(BaseModel):
     name: Optional[str] = None
     type: Optional[str] = None
     color: Optional[str] = None
-
-class CategoryResponse(CategoryBase):
-    id: str
 
 class CardBase(BaseModel):
     name: str
@@ -114,20 +101,6 @@ class CardUpdate(BaseModel):
     closingDay: Optional[int] = None
     dueDay: Optional[int] = None
 
-class CardResponse(CardBase):
-    id: str
-
-class PurchaseBase(BaseModel):
-    cardId: str
-    description: str
-    category: str
-    totalAmount: float
-    installments: int
-    currentInstallment: int
-    amount: float
-    date: datetime
-    month: str # YYYY-MM
-
 class PurchaseCreate(BaseModel):
     cardId: str
     description: str
@@ -136,18 +109,6 @@ class PurchaseCreate(BaseModel):
     installments: int
     date: datetime
     month: str  # YYYY-MM — mês da primeira parcela (informado pelo usuário)
-
-class PurchaseResponse(PurchaseBase):
-    id: str
-
-class InvoiceBase(BaseModel):
-    cardId: str
-    month: str
-    status: str # aberta | fechada | paga
-    totalAmount: float
-    dueDate: datetime
-    paidAt: Optional[datetime] = None
-    accountId: Optional[str] = None
 
 class InvoiceUpdate(BaseModel):
     status: Optional[str] = None
@@ -162,6 +123,3 @@ class InvoicePayRequest(BaseModel):
     accountId: str
     paidAt: Optional[str] = None
     amount: Optional[float] = None
-
-class InvoiceResponse(InvoiceBase):
-    id: str

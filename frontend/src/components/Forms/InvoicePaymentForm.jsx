@@ -36,7 +36,7 @@ export default function InvoicePaymentForm({ amount, accounts, onSubmit, onCance
   return (
     <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--espacamento-md)' }}>
       <p style={{ color: 'var(--cor-texto-secundario)', fontSize: 'var(--fonte-tamanho-sm)', marginBottom: 'var(--espacamento-xs)' }}>
-        Confirme os detalhes do pagamento da fatura. Isso gerará uma despesa na carteira selecionada.
+        Confirme os detalhes do pagamento da fatura.
       </p>
 
       <Input

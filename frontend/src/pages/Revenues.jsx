@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/UI/Toast';
+import { useConfirm } from '../components/UI/ConfirmDialog';
 import { revenueService } from '../services/revenues';
 import { accountService } from '../services/accounts';
 import Card, { CardIcone } from '../components/UI/Card';
@@ -10,6 +12,8 @@ import { ArrowDownCircle, Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRig
 
 export default function Revenues() {
   const { usuario } = useAuth();
+  const toast = useToast();
+  const confirmar = useConfirm();
   const [receitas, setReceitas] = useState([]);
   const [contas, setContas] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -97,21 +101,21 @@ export default function Revenues() {
       if (receitaEditando) {
         let scope = 'single';
         if (receitaEditando.recurringId) {
-          const aplicarFuturas = window.confirm(
-            "Esta é uma receita fixa. Deseja aplicar as alterações a todas as ocorrências futuras?"
-          );
-          if (aplicarFuturas) scope = 'future';
+          const futuras = await confirmar("Aplicar alterações a todas as ocorrências futuras?");
+          if (futuras) scope = 'future';
         }
         await revenueService.updateRevenue(token, receitaEditando.id, dados, scope);
+        toast.sucesso("Receita atualizada!");
       } else {
         await revenueService.createRevenue(token, dados);
+        toast.sucesso("Receita adicionada!");
       }
 
       await carregarDados();
       fecharModal();
     } catch (erro) {
       console.error("Erro ao salvar receita:", erro);
-      alert("Houve um erro ao salvar a receita. Tente novamente.");
+      toast.erro("Erro ao salvar receita.");
     } finally {
       setSalvando(false);
     }
@@ -121,31 +125,27 @@ export default function Revenues() {
     let scope = 'single';
 
     if (receita.recurringId) {
-      const confirmacao = window.confirm(
-        "Esta é uma receita fixa.\n\nClique em OK para excluir TODAS as ocorrências futuras.\nClique em Cancelar para excluir APENAS esta ocorrência (ou cancelar a operação)."
-      );
-
-      if (confirmacao) {
+      const futuras = await confirmar("Excluir todas as ocorrências futuras desta receita fixa?");
+      if (futuras) {
         scope = 'future';
       } else {
-        if (window.confirm("Deseja excluir APENAS esta ocorrência?")) {
-          scope = 'single';
-        } else {
-          return;
-        }
+        const apenas = await confirmar("Excluir apenas esta ocorrência?");
+        if (!apenas) return;
       }
     } else {
-      if (!window.confirm("Tem certeza que deseja excluir esta receita?")) return;
+      const ok = await confirmar("Excluir esta receita?");
+      if (!ok) return;
     }
 
     try {
       setCarregando(true);
       const token = await usuario.getIdToken();
       await revenueService.deleteRevenue(token, receita.id, scope);
+      toast.sucesso("Receita excluída.");
       await carregarDados();
     } catch (erro) {
       console.error("Erro ao excluir receita:", erro);
-      alert("Houve um erro ao excluir. Tente novamente.");
+      toast.erro("Erro ao excluir receita.");
       setCarregando(false);
     }
   }
@@ -169,7 +169,7 @@ export default function Revenues() {
           <h1>Receitas</h1>
           <p>Gerencie todas as suas entradas de dinheiro</p>
         </div>
-        <Button onClick={() => abrirModal()} icone={Plus}>
+        <Button onClick={() => abrirModal()}>
           <Plus size={18} /> Adicionar Receita
         </Button>
       </div>

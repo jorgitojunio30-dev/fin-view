@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/UI/Toast';
+import { useConfirm } from '../components/UI/ConfirmDialog';
 import { categoryService } from '../services/categories';
 import Card from '../components/UI/Card';
 import Button from '../components/UI/Button';
@@ -9,6 +11,8 @@ import { Tag, Plus, Edit2, Trash2, ArrowUpCircle, ArrowDownCircle } from 'lucide
 
 export default function Categories() {
   const { usuario } = useAuth();
+  const toast = useToast();
+  const confirmar = useConfirm();
   const [categorias, setCategorias] = useState([]);
   const [carregando, setCarregando] = useState(true);
   
@@ -48,34 +52,35 @@ export default function Categories() {
     try {
       setSalvando(true);
       const token = await usuario.getIdToken();
-      
       if (categoriaEditando) {
         await categoryService.updateCategory(token, categoriaEditando.id, dados);
+        toast.sucesso("Categoria atualizada!");
       } else {
         await categoryService.createCategory(token, dados);
+        toast.sucesso("Categoria adicionada!");
       }
-      
       await carregarCategorias();
       fecharModal();
     } catch (erro) {
       console.error("Erro ao salvar categoria:", erro);
-      alert("Houve um erro ao salvar a categoria.");
+      toast.erro("Erro ao salvar categoria.");
     } finally {
       setSalvando(false);
     }
   }
 
   async function handleExcluir(id) {
-    if (!window.confirm("Tem certeza que deseja excluir esta categoria?")) return;
-    
+    const ok = await confirmar("Tem certeza que deseja excluir esta categoria?");
+    if (!ok) return;
     try {
       setCarregando(true);
       const token = await usuario.getIdToken();
       await categoryService.deleteCategory(token, id);
+      toast.sucesso("Categoria excluída.");
       await carregarCategorias();
     } catch (erro) {
       console.error("Erro ao excluir categoria:", erro);
-      alert("Houve um erro ao excluir.");
+      toast.erro("Erro ao excluir categoria.");
       setCarregando(false);
     }
   }
@@ -90,7 +95,7 @@ export default function Categories() {
           <h1>Categorias</h1>
           <p>Personalize as categorias para seus lançamentos</p>
         </div>
-        <Button onClick={() => abrirModal()} icone={Plus}>
+        <Button onClick={() => abrirModal()}>
           <Plus size={18} /> Nova Categoria
         </Button>
       </div>

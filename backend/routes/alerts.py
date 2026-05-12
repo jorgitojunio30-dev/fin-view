@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from middleware.auth import verificar_token
 from services.firestore import query_documents, get_all_documents
-from datetime import datetime, date, timedelta
+from datetime import datetime, timedelta
 
 router = APIRouter(
     prefix="/alerts",

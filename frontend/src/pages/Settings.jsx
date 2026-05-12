@@ -3,7 +3,6 @@ import { useAuth } from '../hooks/useAuth';
 import Card from '../components/UI/Card';
 import Button from '../components/UI/Button';
 import Input from '../components/UI/Input';
-import { User, Lock, Trash2, Save, ShieldCheck } from 'lucide-react';
 import './Settings.css';
 
 export default function Settings() {

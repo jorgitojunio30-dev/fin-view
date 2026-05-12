@@ -10,6 +10,7 @@ export default function Button({
   onClick,
   className = '',
   id,
+  estilo,
   ...props
 }) {
   return (
@@ -19,6 +20,7 @@ export default function Button({
       disabled={disabled || carregando}
       onClick={onClick}
       id={id}
+      style={estilo}
       {...props}
     >
       {carregando ? <span className="spinner"></span> : children}

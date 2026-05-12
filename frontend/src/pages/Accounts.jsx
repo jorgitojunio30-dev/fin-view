@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/UI/Toast';
+import { useConfirm } from '../components/UI/ConfirmDialog';
 import { accountService } from '../services/accounts';
 import Card, { CardIcone } from '../components/UI/Card';
 import Button from '../components/UI/Button';
@@ -9,6 +11,8 @@ import { Landmark, Plus, Edit2, Trash2 } from 'lucide-react';
 
 export default function Accounts() {
   const { usuario } = useAuth();
+  const toast = useToast();
+  const confirmar = useConfirm();
   const [contas, setContas] = useState([]);
   const [carregando, setCarregando] = useState(true);
   
@@ -49,34 +53,35 @@ export default function Accounts() {
     try {
       setSalvando(true);
       const token = await usuario.getIdToken();
-      
       if (contaEditando) {
         await accountService.updateAccount(token, contaEditando.id, dados);
+        toast.sucesso("Carteira atualizada!");
       } else {
         await accountService.createAccount(token, dados);
+        toast.sucesso("Carteira adicionada!");
       }
-      
       await carregarContas();
       fecharModal();
     } catch (erro) {
       console.error("Erro ao salvar conta:", erro);
-      alert("Houve um erro ao salvar a conta. Tente novamente.");
+      toast.erro("Erro ao salvar carteira.");
     } finally {
       setSalvando(false);
     }
   }
 
   async function handleExcluir(id) {
-    if (!window.confirm("Tem certeza que deseja excluir esta conta?")) return;
-    
+    const ok = await confirmar("Tem certeza que deseja excluir esta carteira?");
+    if (!ok) return;
     try {
       setCarregando(true);
       const token = await usuario.getIdToken();
       await accountService.deleteAccount(token, id);
+      toast.sucesso("Carteira excluída.");
       await carregarContas();
     } catch (erro) {
       console.error("Erro ao excluir conta:", erro);
-      alert("Houve um erro ao excluir. Tente novamente.");
+      toast.erro("Erro ao excluir carteira.");
       setCarregando(false);
     }
   }
@@ -88,7 +93,7 @@ export default function Accounts() {
           <h1>Carteiras / Perfis</h1>
           <p>Organize suas finanças em diferentes perfis (ex: Casa, Time)</p>
         </div>
-        <Button onClick={() => abrirModal()} icone={Plus}>
+        <Button onClick={() => abrirModal()}>
           <Plus size={18} /> Adicionar Carteira
         </Button>
       </div>

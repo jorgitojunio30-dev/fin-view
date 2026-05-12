@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../components/UI/Toast';
+import { useConfirm } from '../components/UI/ConfirmDialog';
 import { expenseService } from '../services/expenses';
 import { accountService } from '../services/accounts';
 import Card, { CardIcone } from '../components/UI/Card';
@@ -10,6 +12,8 @@ import { ArrowUpCircle, Plus, Edit2, Trash2, Calendar, ChevronLeft, ChevronRight
 
 export default function Expenses() {
   const { usuario } = useAuth();
+  const toast = useToast();
+  const confirmar = useConfirm();
   const [despesas, setDespesas] = useState([]);
   const [contas, setContas] = useState([]);
   const [carregando, setCarregando] = useState(true);
@@ -95,21 +99,21 @@ export default function Expenses() {
       if (despesaEditando) {
         let scope = 'single';
         if (despesaEditando.recurringId) {
-          const aplicarFuturas = window.confirm(
-            "Esta é uma despesa fixa. Deseja aplicar as alterações a todas as parcelas futuras?"
-          );
-          if (aplicarFuturas) scope = 'future';
+          const futuras = await confirmar("Aplicar alterações a todas as parcelas futuras?");
+          if (futuras) scope = 'future';
         }
         await expenseService.updateExpense(token, despesaEditando.id, dados, scope);
+        toast.sucesso("Despesa atualizada!");
       } else {
         await expenseService.createExpense(token, dados);
+        toast.sucesso("Despesa adicionada!");
       }
       
       await carregarDados();
       fecharModal();
     } catch (erro) {
       console.error("Erro ao salvar despesa:", erro);
-      alert("Houve um erro ao salvar a despesa. Tente novamente.");
+      toast.erro("Erro ao salvar despesa.");
     } finally {
       setSalvando(false);
     }
@@ -119,31 +123,27 @@ export default function Expenses() {
     let scope = 'single';
     
     if (despesa.recurringId) {
-      const confirmacao = window.confirm(
-        "Esta é uma despesa fixa.\n\nClique em OK para excluir TODAS as parcelas futuras.\nClique em Cancelar para excluir APENAS esta parcela (ou cancelar a operação)."
-      );
-      
-      if (confirmacao) {
+      const futuras = await confirmar("Excluir todas as parcelas futuras desta despesa fixa?");
+      if (futuras) {
         scope = 'future';
       } else {
-        if (window.confirm("Deseja excluir APENAS esta parcela?")) {
-          scope = 'single';
-        } else {
-          return;
-        }
+        const apenas = await confirmar("Excluir apenas esta parcela?");
+        if (!apenas) return;
       }
     } else {
-      if (!window.confirm("Tem certeza que deseja excluir esta despesa?")) return;
+      const ok = await confirmar("Excluir esta despesa?");
+      if (!ok) return;
     }
     
     try {
       setCarregando(true);
       const token = await usuario.getIdToken();
       await expenseService.deleteExpense(token, despesa.id, scope);
+      toast.sucesso("Despesa excluída.");
       await carregarDados();
     } catch (erro) {
       console.error("Erro ao excluir despesa:", erro);
-      alert("Houve um erro ao excluir. Tente novamente.");
+      toast.erro("Erro ao excluir despesa.");
       setCarregando(false);
     }
   }
@@ -165,17 +165,17 @@ export default function Expenses() {
     if (!meses) return;
     const num = parseInt(meses);
     if (isNaN(num) || num < 1) {
-      alert("Informe um número válido.");
+      toast.aviso("Informe um número válido.");
       return;
     }
     try {
       const token = await usuario.getIdToken();
       await expenseService.renewSeries(token, despesa.id, num);
-      alert(`Série renovada com mais ${num} meses!`);
+      toast.sucesso(`Série renovada com mais ${num} meses!`);
       await carregarDados();
     } catch (erro) {
       console.error("Erro ao renovar série:", erro);
-      alert("Erro ao renovar a série. Tente novamente.");
+      toast.erro("Erro ao renovar a série.");
     }
   }
 
@@ -196,7 +196,7 @@ export default function Expenses() {
           <h1>Despesas</h1>
           <p>Gerencie todas as suas saídas de dinheiro</p>
         </div>
-        <Button onClick={() => abrirModal()} icone={Plus} estilo={{ background: 'var(--cor-erro)', borderColor: 'var(--cor-erro)' }}>
+        <Button onClick={() => abrirModal()} estilo={{ background: 'var(--cor-erro)', borderColor: 'var(--cor-erro)' }}>
           <Plus size={18} /> Adicionar Despesa
         </Button>
       </div>
